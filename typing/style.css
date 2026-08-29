@@ -120,10 +120,11 @@ pre { background: #10131a; border: 1px solid var(--line); border-radius: 6px;
   font-family: Consolas, "SF Mono", Menlo, monospace;
   border-bottom: 1px dashed var(--dim);
 }
-.in-err {                          /* 誤入力。消すまで残る */
+.in-err {                          /* 目標とずれた入力。消すまで残る */
   color: #0d1117; background: var(--miss);
   border-radius: 3px; padding: 0 2px;
 }
+.in-pending.bad { color: var(--miss); border-bottom-color: var(--miss); }
 .caret {
   display: inline-block; width: 2px; height: 1.1em;
   background: var(--accent); vertical-align: -.18em; margin-left: 2px;

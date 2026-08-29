@@ -96,9 +96,12 @@ var Engine = (function () {
 
   function createTarget(table, kana) {
     var memo = new Map();          // "i\0buf" -> 最短の残りローマ字 (不可能なら null)
-    var states = [{ i: 0, buf: '' }];
-    var typed = '';
-    var errors = '';               // 誤入力された文字。消すまで先へ進めない
+
+    // 入力は IME と同じように、打鍵をテーブルで変換して積んでいく。
+    // 目標と合っているかどうかは、積まれた text を kana と突き合わせて判定する。
+    // ミスタイプしても変換は止めない (何が入力されてしまうのかを見せるため)。
+    var text = '';                 // 変換された入力
+    var buf = '';                  // 未確定のローマ字
     var correct = 0;
     var miss = 0;
 
@@ -191,138 +194,83 @@ var Engine = (function () {
 
     function pathTo(n) { return pathState(n, '', new Set()); }
 
-    // バッファがそのまま規則に一致する状態を、確定済みの状態にも展開する
-    function expand(list) {
-      var out = [];
-      var seen = new Set();
-      var stack = list.slice();
-      while (stack.length) {
-        var s = stack.pop();
-        var k = skey(s.i, s.buf);
-        if (seen.has(k)) continue;
-        seen.add(k);
-        out.push(s);
-        if (s.buf !== '') {
-          var e = table.map.get(s.buf);
-          if (e && kana.startsWith(e.out, s.i)) {
-            stack.push({ i: s.i + e.out.length, buf: e.next });
-          }
+    // 打鍵 1 文字を IME と同じ要領で取り込む。目標とは無関係に、
+    // テーブルどおりに変換する。変換しきれない文字はそのまま入力される。
+    function convert(ch) {
+      var b = buf + ch;
+      var guard = 0;
+      while (b !== '' && guard++ < 64) {
+        if (table.extendable.has(b)) break;              // まだ続きを待つ
+
+        var e = table.map.get(b);
+        if (e) { text += e.out; b = e.next; continue; }  // 規則どおりに確定
+
+        // b は規則にならない。前から確定できるだけ確定させて詰める
+        var applied = false;
+        for (var L = b.length - 1; L >= 1; L--) {
+          var pre = table.map.get(b.slice(0, L));
+          if (pre) { text += pre.out; b = pre.next + b.slice(L); applied = true; break; }
         }
+        if (applied) continue;
+
+        text += b.charAt(0);                             // 変換できない文字はそのまま
+        b = b.slice(1);
       }
-      return out;
+      buf = b;
     }
 
-    function isComplete() {
-      for (var n = 0; n < states.length; n++) {
-        if (states[n].i >= kana.length && states[n].buf === '') return true;
-      }
-      return false;
+    // text と kana が一致している長さ
+    function matchLen() {
+      var n = Math.min(text.length, kana.length);
+      var i = 0;
+      while (i < n && text.charAt(i) === kana.charAt(i)) i++;
+      return i;
     }
+
+    // 目標に向かって進めている状態か。
+    // 余計な文字が入っている / バッファがどう転んでも目標にならない、なら false。
+    function onTrack() {
+      var m = matchLen();
+      return m === text.length && remainingFrom(m, buf) !== null;
+    }
+
+    function isComplete() { return text === kana && buf === ''; }
 
     // 1 打鍵。戻り値は 'ok' / 'miss' / 'done'
     function input(ch) {
-      // 誤入力が残っている間は、何を打っても誤入力として積まれる
-      if (errors !== '') { errors += ch; miss++; return 'miss'; }
-
-      var next = [];
-      var seen = new Set();
-
-      function push(s) {
-        if (remainingFrom(s.i, s.buf) === null) return;   // 目標に到達不能な枝は捨てる
-        var k = skey(s.i, s.buf);
-        if (seen.has(k)) return;
-        seen.add(k);
-        next.push(s);
-      }
-
-      for (var n = 0; n < states.length; n++) {
-        var s = states[n];
-        var nb = s.buf + ch;
-        if (table.extendable.has(nb)) push({ i: s.i, buf: nb });   // まだ続きを待つ
-        var e = table.map.get(nb);
-        if (e && kana.startsWith(e.out, s.i)) push({ i: s.i + e.out.length, buf: e.next });
-      }
-
-      if (next.length === 0) {
-        // テーブルにない文字はそのまま一致で進める
-        for (var m = 0; m < states.length; m++) {
-          if (states[m].buf === '' && kana.charAt(states[m].i) === ch && isDirect(ch)) {
-            push({ i: states[m].i + 1, buf: '' });
-          }
-        }
-      }
-
-      if (next.length === 0) { errors += ch; miss++; return 'miss'; }
-
-      states = expand(next);
-      typed += ch;
+      convert(ch);
+      if (!onTrack()) { miss++; return 'miss'; }
       correct++;
       return isComplete() ? 'done' : 'ok';
     }
 
     // バックスペース。戻り値は、実際に取り消したかどうか。
-    //   1. 誤入力が残っていれば、その 1 文字を消す
-    //   2. 未確定のローマ字が残っていれば、それを捨てる
-    //   3. どちらも無ければ、確定したかなを 1 文字ぶん戻す
+    // 未確定のローマ字が残っていればそれを捨て、無ければ入力を 1 文字戻す。
+    // 戻すのはローマ字ではなく、変換後の 1 文字 (かな単位)。
     function backspace() {
-      if (errors !== '') { errors = errors.slice(0, -1); return true; }
-
-      var maxI = -1;
-      var cleanAtMax = false;
-      for (var n = 0; n < states.length; n++) {
-        var s = states[n];
-        if (remainingFrom(s.i, s.buf) === null) continue;
-        if (s.i > maxI) { maxI = s.i; cleanAtMax = false; }
-        if (s.i === maxI && s.buf === '') cleanAtMax = true;
-      }
-      if (maxI < 0) return false;
-
-      // 未確定のローマ字があるならその場に留まり、無ければかな 1 文字ぶん戻る
-      var to = cleanAtMax ? maxI - 1 : maxI;
-      if (to < 0) return false;
-
-      // その位置に到達できない / そこから打ち切れないなら、さらに手前へ
-      while (to > 0 && (pathTo(to) === null || remainingFrom(to, '') === null)) to--;
-      var head = pathTo(to);
-      if (head === null) return false;
-
-      states = [{ i: to, buf: '' }];
-      typed = head;
-      return true;
+      if (buf !== '') { buf = ''; return true; }
+      if (text !== '') { text = text.slice(0, -1); return true; }
+      return false;
     }
 
     // 表示用。
-    //   confirmed + pending + errors が、画面の入力欄にそのまま並ぶ。
-    //   remaining は、そこから打ち切るのに必要な最短のローマ字。
+    //   入力欄  : confirmed (目標と一致) + wrong (ずれた分) + pending (未確定)
+    //   ガイド  : guideDone + guidePending + remaining
+    // ガイドは実際に打った綴りではなく、その位置に至る最短の綴りで表示する。
     function view() {
-      var viable = [];
-      var maxI = -1;
-      var best = null;
-      for (var n = 0; n < states.length; n++) {
-        var s = states[n];
-        var r = remainingFrom(s.i, s.buf);
-        if (r === null) continue;
-        viable.push(s);
-        if (s.i > maxI) maxI = s.i;
-        if (best === null || r.length < best.length) best = r;
-      }
-      if (maxI < 0) maxI = 0;
-
-      // 先頭の状態に未確定のローマ字が残っていれば、それが入力欄に見えている
-      var pending = null;
-      for (var m = 0; m < viable.length; m++) {
-        if (viable[m].i !== maxI) continue;
-        if (viable[m].buf === '') { pending = ''; break; }
-        if (pending === null) pending = viable[m].buf;
-      }
-
+      var m = matchLen();
+      var ok = onTrack();
+      var rem = ok ? remainingFrom(m, buf) : remainingFrom(m, '');
+      var head = pathTo(m);
       return {
-        typed: typed,
-        remaining: best === null ? '' : best,
-        kanaIndex: Math.min(maxI, kana.length),
-        confirmed: kana.slice(0, Math.min(maxI, kana.length)),
-        pending: pending === null ? '' : pending,
-        errors: errors,
+        confirmed: text.slice(0, m),
+        wrong: text.slice(m),
+        pending: buf,
+        onTrack: ok,
+        kanaIndex: m,
+        guideDone: head === null ? '' : head,
+        guidePending: ok ? buf : '',
+        remaining: rem === null ? '' : rem,
         correct: correct,
         miss: miss
       };

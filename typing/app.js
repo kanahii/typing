@@ -171,24 +171,27 @@
       el.kana.appendChild(spanRun(kana.slice(v.kanaIndex + 1), 'todo'));
     }
 
-    // 入力欄は空から増えていく。確定かな + 未確定ローマ字 + 誤入力
+    // 入力欄は空から増えていく。打ち間違えても変換は続くので、
+    // 間違えた結果そのものが wrong として見える
     el.input.textContent = '';
     if (v.confirmed) el.input.appendChild(spanRun(v.confirmed, 'in-ok'));
-    if (v.pending) el.input.appendChild(spanRun(v.pending, 'in-pending'));
-    if (v.errors) el.input.appendChild(spanRun(v.errors, 'in-err'));
+    if (v.wrong) el.input.appendChild(spanRun(v.wrong, 'in-err'));
+    if (v.pending) {
+      el.input.appendChild(spanRun(v.pending, v.onTrack ? 'in-pending' : 'in-pending bad'));
+    }
     el.input.appendChild(spanRun('', 'caret'));
 
     el.romaji.textContent = '';
-    if (v.typed) el.romaji.appendChild(spanRun(v.typed, 'done'));
+    if (v.guideDone) el.romaji.appendChild(spanRun(v.guideDone, 'done'));
+    if (v.guidePending) el.romaji.appendChild(spanRun(v.guidePending, 'done'));
     if (v.remaining) {
       el.romaji.appendChild(spanRun(v.remaining.charAt(0), 'cur'));
       el.romaji.appendChild(spanRun(v.remaining.slice(1), 'todo'));
     }
 
-    el.stage.classList.toggle('has-error', v.errors !== '');
+    el.stage.classList.toggle('has-error', !v.onTrack);
     if (S.running) {
-      el.hint.textContent = v.errors !== ''
-        ? 'BackSpace で誤入力を消してください' : '';
+      el.hint.textContent = v.onTrack ? '' : 'BackSpace で消してください';
     }
   }
 
