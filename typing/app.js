@@ -226,6 +226,12 @@
     }
   }
 
+  // かな 1 文字ぶんの取り消し。打鍵数・ミス数には影響させない
+  function handleBackspace() {
+    if (!S.target || S.finished || !S.running) return;
+    if (S.target.backspace()) render();
+  }
+
   var missTimer = 0;
   function flashMiss() {
     el.stage.classList.add('miss');
@@ -262,9 +268,10 @@
       if (S.finished) { e.preventDefault(); startSet(); focusInput(); }
       return;
     }
-    if (e.key === 'Backspace') { e.preventDefault(); return; }
-    if (e.key.length !== 1) return;
     if (!el.settings.hidden && document.activeElement !== el.keycatch) return;
+
+    if (e.key === 'Backspace') { e.preventDefault(); handleBackspace(); return; }
+    if (e.key.length !== 1) return;
 
     e.preventDefault();
     handleChar(e.key);

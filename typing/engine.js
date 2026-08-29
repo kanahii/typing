@@ -61,8 +61,10 @@ var Engine = (function () {
   function buildTable(map, stats) {
     // prefixIndex: 前方一致検索用 (バッファ文字列 -> それで始まる規則の配列)
     // extendable : 「まだ続きがある」プレフィックスの集合
+    // byNext     : 逆引き用 (規則の「次の入力」-> その規則の配列)
     var prefixIndex = new Map();
     var extendable = new Set();
+    var byNext = new Map();
     var ord = 0;
 
     map.forEach(function (v, key) {
@@ -75,12 +77,16 @@ var Engine = (function () {
         arr.push(entry);
         if (i < key.length) extendable.add(p);
       }
+      var nx = byNext.get(entry.next);
+      if (!nx) { nx = []; byNext.set(entry.next, nx); }
+      nx.push(entry);
     });
 
     return {
       map: map,
       prefixIndex: prefixIndex,
       extendable: extendable,
+      byNext: byNext,
       size: map.size,
       stats: stats
     };
@@ -139,6 +145,50 @@ var Engine = (function () {
       var r = shortest(i, buf, new Set());
       return r === null ? null : r.s;
     }
+
+    // shortest の逆向き。先頭から (i, buf) に到達する最短ローマ字を返す。
+    // バックスペースで戻った位置の「打ち終わったローマ字」表示に使う。
+    var pathMemo = new Map();
+
+    function pathState(i, buf, visiting) {
+      if (i < 0) return null;
+      if (i === 0 && buf === '') return '';
+      var k = skey(i, buf);
+      if (pathMemo.has(k)) return pathMemo.get(k);
+      if (visiting.has(k)) return null;           // 循環定義よけ
+
+      visiting.add(k);
+      var best = null;
+      var bestOrd = Infinity;
+      // (i, buf) に着く規則は「次の入力」が buf のものだけ
+      var list = table.byNext.get(buf) || [];
+      for (var n = 0; n < list.length; n++) {
+        var e = list[n];
+        var pi = i - e.out.length;
+        if (pi < 0 || !kana.startsWith(e.out, pi)) continue;
+        // e.key は、直前のバッファ (e.key の真の接頭辞) の続きとして打たれる
+        for (var p = 0; p < e.key.length; p++) {
+          var head = pathState(pi, e.key.slice(0, p), visiting);
+          if (head === null) continue;
+          var cand = head + e.key.slice(p);
+          if (best === null || cand.length < best.length
+              || (cand.length === best.length && e.ord < bestOrd)) {
+            best = cand;
+            bestOrd = e.ord;
+          }
+        }
+      }
+      // 規則がない文字 (英数字・空白など) はそのまま打たれている
+      if (best === null && buf === '' && i > 0 && isDirect(kana.charAt(i - 1))) {
+        var head2 = pathState(i - 1, '', visiting);
+        if (head2 !== null) best = head2 + kana.charAt(i - 1);
+      }
+      visiting.delete(k);
+      pathMemo.set(k, best);
+      return best;
+    }
+
+    function pathTo(n) { return pathState(n, '', new Set()); }
 
     // バッファがそのまま規則に一致する状態を、確定済みの状態にも展開する
     function expand(list) {
@@ -206,6 +256,34 @@ var Engine = (function () {
       return isComplete() ? 'done' : 'ok';
     }
 
+    // バックスペース。ローマ字ではなく、かな 1 文字ぶんを取り消す。
+    // 未確定のローマ字が残っているときは、まずそれを捨てる。
+    // 戻り値は、実際に取り消したかどうか。
+    function backspace() {
+      var maxI = -1;
+      var cleanAtMax = false;
+      for (var n = 0; n < states.length; n++) {
+        var s = states[n];
+        if (remainingFrom(s.i, s.buf) === null) continue;
+        if (s.i > maxI) { maxI = s.i; cleanAtMax = false; }
+        if (s.i === maxI && s.buf === '') cleanAtMax = true;
+      }
+      if (maxI < 0) return false;
+
+      // 未確定のローマ字があるならその場に留まり、無ければかな 1 文字ぶん戻る
+      var to = cleanAtMax ? maxI - 1 : maxI;
+      if (to < 0) return false;
+
+      // その位置に到達できない / そこから打ち切れないなら、さらに手前へ
+      while (to > 0 && (pathTo(to) === null || remainingFrom(to, '') === null)) to--;
+      var head = pathTo(to);
+      if (head === null) return false;
+
+      states = [{ i: to, buf: '' }];
+      typed = head;
+      return true;
+    }
+
     // 表示用。typed は実際に打った文字列、remaining は最短の残り
     function view() {
       var best = null;
@@ -229,6 +307,7 @@ var Engine = (function () {
     return {
       kana: kana,
       input: input,
+      backspace: backspace,
       view: view,
       isComplete: isComplete,
       // このテーブルで打ち切れる問題かどうか
