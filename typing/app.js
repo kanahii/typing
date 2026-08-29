@@ -9,7 +9,8 @@
     fileProblems: $('file-problems'), btnProblemsReset: $('btn-problems-reset'), problemsStatus: $('problems-status'),
     optShuffle: $('opt-shuffle'), optCount: $('opt-count'), btnApply: $('btn-apply'),
     stage: $('stage'), qProgress: $('q-progress'), timer: $('timer'),
-    display: $('display'), kana: $('kana'), romaji: $('romaji'), hint: $('hint'),
+    display: $('display'), kana: $('kana'), input: $('input'),
+    romaji: $('romaji'), hint: $('hint'),
     statKpm: $('stat-kpm'), statKeys: $('stat-keys'), statMiss: $('stat-miss'), statAcc: $('stat-acc'),
     result: $('result'), rKpm: $('r-kpm'), rTime: $('r-time'), rKeys: $('r-keys'),
     rMiss: $('r-miss'), rAcc: $('r-acc'), btnRetry: $('btn-retry'),
@@ -160,20 +161,34 @@
   function render() {
     if (!S.target) return;
     var v = S.target.view();
-
     var kana = S.target.kana;
+
+    // よみは見本。減らさず全文を出し、次に入力するかなだけ印をつける
     el.kana.textContent = '';
-    if (v.kanaIndex > 0) el.kana.appendChild(spanRun(kana.slice(0, v.kanaIndex), 'done'));
+    el.kana.appendChild(spanRun(kana.slice(0, v.kanaIndex), 'todo'));
     if (v.kanaIndex < kana.length) {
       el.kana.appendChild(spanRun(kana.charAt(v.kanaIndex), 'cur'));
       el.kana.appendChild(spanRun(kana.slice(v.kanaIndex + 1), 'todo'));
     }
+
+    // 入力欄は空から増えていく。確定かな + 未確定ローマ字 + 誤入力
+    el.input.textContent = '';
+    if (v.confirmed) el.input.appendChild(spanRun(v.confirmed, 'in-ok'));
+    if (v.pending) el.input.appendChild(spanRun(v.pending, 'in-pending'));
+    if (v.errors) el.input.appendChild(spanRun(v.errors, 'in-err'));
+    el.input.appendChild(spanRun('', 'caret'));
 
     el.romaji.textContent = '';
     if (v.typed) el.romaji.appendChild(spanRun(v.typed, 'done'));
     if (v.remaining) {
       el.romaji.appendChild(spanRun(v.remaining.charAt(0), 'cur'));
       el.romaji.appendChild(spanRun(v.remaining.slice(1), 'todo'));
+    }
+
+    el.stage.classList.toggle('has-error', v.errors !== '');
+    if (S.running) {
+      el.hint.textContent = v.errors !== ''
+        ? 'BackSpace で誤入力を消してください' : '';
     }
   }
 

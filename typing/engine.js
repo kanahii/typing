@@ -98,6 +98,7 @@ var Engine = (function () {
     var memo = new Map();          // "i\0buf" -> 最短の残りローマ字 (不可能なら null)
     var states = [{ i: 0, buf: '' }];
     var typed = '';
+    var errors = '';               // 誤入力された文字。消すまで先へ進めない
     var correct = 0;
     var miss = 0;
 
@@ -220,6 +221,9 @@ var Engine = (function () {
 
     // 1 打鍵。戻り値は 'ok' / 'miss' / 'done'
     function input(ch) {
+      // 誤入力が残っている間は、何を打っても誤入力として積まれる
+      if (errors !== '') { errors += ch; miss++; return 'miss'; }
+
       var next = [];
       var seen = new Set();
 
@@ -248,7 +252,7 @@ var Engine = (function () {
         }
       }
 
-      if (next.length === 0) { miss++; return 'miss'; }
+      if (next.length === 0) { errors += ch; miss++; return 'miss'; }
 
       states = expand(next);
       typed += ch;
@@ -256,10 +260,13 @@ var Engine = (function () {
       return isComplete() ? 'done' : 'ok';
     }
 
-    // バックスペース。ローマ字ではなく、かな 1 文字ぶんを取り消す。
-    // 未確定のローマ字が残っているときは、まずそれを捨てる。
-    // 戻り値は、実際に取り消したかどうか。
+    // バックスペース。戻り値は、実際に取り消したかどうか。
+    //   1. 誤入力が残っていれば、その 1 文字を消す
+    //   2. 未確定のローマ字が残っていれば、それを捨てる
+    //   3. どちらも無ければ、確定したかなを 1 文字ぶん戻す
     function backspace() {
+      if (errors !== '') { errors = errors.slice(0, -1); return true; }
+
       var maxI = -1;
       var cleanAtMax = false;
       for (var n = 0; n < states.length; n++) {
@@ -284,21 +291,38 @@ var Engine = (function () {
       return true;
     }
 
-    // 表示用。typed は実際に打った文字列、remaining は最短の残り
+    // 表示用。
+    //   confirmed + pending + errors が、画面の入力欄にそのまま並ぶ。
+    //   remaining は、そこから打ち切るのに必要な最短のローマ字。
     function view() {
+      var viable = [];
+      var maxI = -1;
       var best = null;
-      var maxI = 0;
       for (var n = 0; n < states.length; n++) {
         var s = states[n];
         var r = remainingFrom(s.i, s.buf);
         if (r === null) continue;
+        viable.push(s);
         if (s.i > maxI) maxI = s.i;
         if (best === null || r.length < best.length) best = r;
       }
+      if (maxI < 0) maxI = 0;
+
+      // 先頭の状態に未確定のローマ字が残っていれば、それが入力欄に見えている
+      var pending = null;
+      for (var m = 0; m < viable.length; m++) {
+        if (viable[m].i !== maxI) continue;
+        if (viable[m].buf === '') { pending = ''; break; }
+        if (pending === null) pending = viable[m].buf;
+      }
+
       return {
         typed: typed,
         remaining: best === null ? '' : best,
         kanaIndex: Math.min(maxI, kana.length),
+        confirmed: kana.slice(0, Math.min(maxI, kana.length)),
+        pending: pending === null ? '' : pending,
+        errors: errors,
         correct: correct,
         miss: miss
       };
