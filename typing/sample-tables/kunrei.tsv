@@ -1,0 +1,156 @@
+# 訓令式のみのローマ字テーブル (サンプル)
+# ヘボン式 (shi / chi / tsu / fu / ji / sha ...) は受け付けない
+# 列: 入力 <TAB> 出力 <TAB> 次の入力
+-	ー
+,	、
+.	。
+a	あ
+i	い
+u	う
+e	え
+o	お
+la	ぁ
+li	ぃ
+lu	ぅ
+le	ぇ
+lo	ぉ
+lya	ゃ
+lyu	ゅ
+lyo	ょ
+ltu	っ
+ka	か
+ki	き
+ku	く
+ke	け
+ko	こ
+kya	きゃ
+kyu	きゅ
+kyo	きょ
+ga	が
+gi	ぎ
+gu	ぐ
+ge	げ
+go	ご
+gya	ぎゃ
+gyu	ぎゅ
+gyo	ぎょ
+sa	さ
+si	し
+su	す
+se	せ
+so	そ
+sya	しゃ
+syu	しゅ
+syo	しょ
+sye	しぇ
+za	ざ
+zi	じ
+zu	ず
+ze	ぜ
+zo	ぞ
+zya	じゃ
+zyu	じゅ
+zyo	じょ
+zye	じぇ
+ta	た
+ti	ち
+tu	つ
+te	て
+to	と
+tya	ちゃ
+tyu	ちゅ
+tyo	ちょ
+tha	てゃ
+thi	てぃ
+thu	てゅ
+tho	てょ
+da	だ
+di	ぢ
+du	づ
+de	で
+do	ど
+dya	ぢゃ
+dyu	ぢゅ
+dyo	ぢょ
+na	な
+ni	に
+nu	ぬ
+ne	ね
+no	の
+nya	にゃ
+nyu	にゅ
+nyo	にょ
+ha	は
+hi	ひ
+hu	ふ
+he	へ
+ho	ほ
+hya	ひゃ
+hyu	ひゅ
+hyo	ひょ
+ba	ば
+bi	び
+bu	ぶ
+be	べ
+bo	ぼ
+bya	びゃ
+byu	びゅ
+byo	びょ
+pa	ぱ
+pi	ぴ
+pu	ぷ
+pe	ぺ
+po	ぽ
+pya	ぴゃ
+pyu	ぴゅ
+pyo	ぴょ
+ma	ま
+mi	み
+mu	む
+me	め
+mo	も
+mya	みゃ
+myu	みゅ
+myo	みょ
+ya	や
+yu	ゆ
+yo	よ
+ra	ら
+ri	り
+ru	る
+re	れ
+ro	ろ
+rya	りゃ
+ryu	りゅ
+ryo	りょ
+wa	わ
+wo	を
+nn	ん
+n'	ん
+# ん + 子音
+nb	ん	b
+nd	ん	d
+ng	ん	g
+nh	ん	h
+nk	ん	k
+nm	ん	m
+np	ん	p
+nr	ん	r
+ns	ん	s
+nt	ん	t
+nw	ん	w
+nz	ん	z
+# 促音
+kk	っ	k
+ss	っ	s
+tt	っ	t
+hh	っ	h
+mm	っ	m
+yy	っ	y
+rr	っ	r
+ww	っ	w
+gg	っ	g
+zz	っ	z
+dd	っ	d
+bb	っ	b
+pp	っ	p

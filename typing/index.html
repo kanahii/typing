@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ローマ字タイピング練習</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="app">
+
+  <header class="topbar">
+    <h1>ローマ字タイピング練習</h1>
+    <button type="button" id="btn-settings" class="ghost">設定</button>
+  </header>
+
+  <p id="ime-warning" class="warning" hidden>
+    日本語入力(IME)がオンになっています。半角/全角キーで<strong>直接入力</strong>に切り替えてください。
+  </p>
+
+  <!-- 設定 -->
+  <section id="settings" class="panel settings" hidden>
+    <div class="setting">
+      <label for="file-table">ローマ字テーブル (タブ区切りテキスト)</label>
+      <div class="row">
+        <input type="file" id="file-table" accept=".tsv,.txt,.text,text/plain,text/tab-separated-values">
+        <button type="button" id="btn-table-reset" class="ghost">既定に戻す</button>
+      </div>
+      <p class="status" id="table-status"></p>
+      <details>
+        <summary>ファイル形式</summary>
+        <p>
+          Google 日本語入力のローマ字テーブルと同じ形式です。
+          1 行が <code>入力</code> / <code>出力</code> / <code>次の入力</code> の 3 列で、区切りはタブ。
+        </p>
+<pre>sa	さ
+si	し
+tt	っ	t
+nk	ん	k</pre>
+        <ul>
+          <li><code>入力</code> が重複した場合は、後に定義した行で上書きされます。</li>
+          <li><code>出力</code> と <code>次の入力</code> がどちらも空の行はコメントとして無視されます。</li>
+          <li>文字コードは UTF-8 / UTF-16 / Shift_JIS を自動判定します。</li>
+        </ul>
+      </details>
+    </div>
+
+    <div class="setting">
+      <label for="file-problems">お題ファイル (表示文 &lt;TAB&gt; よみ)</label>
+      <div class="row">
+        <input type="file" id="file-problems" accept=".tsv,.txt,.text,text/plain,text/tab-separated-values">
+        <button type="button" id="btn-problems-reset" class="ghost">既定に戻す</button>
+      </div>
+      <p class="status" id="problems-status"></p>
+    </div>
+
+    <div class="setting row">
+      <label class="inline"><input type="checkbox" id="opt-shuffle" checked> ランダム出題</label>
+      <label class="inline">出題数
+        <input type="number" id="opt-count" min="1" max="200" value="10">
+      </label>
+      <button type="button" id="btn-apply" class="primary">この設定で開始</button>
+    </div>
+  </section>
+
+  <!-- 練習 -->
+  <section id="stage" class="panel stage">
+    <div class="stage-head">
+      <span id="q-progress">- / -</span>
+      <span id="timer">0.0 秒</span>
+    </div>
+
+    <p id="display" class="display"></p>
+    <p id="kana" class="kana"></p>
+    <p id="romaji" class="romaji"></p>
+
+    <p id="hint" class="hint">キーを押すと開始します</p>
+
+    <div class="stats">
+      <div class="stat"><b id="stat-kpm">0</b><small>打/分</small></div>
+      <div class="stat"><b id="stat-keys">0</b><small>打鍵</small></div>
+      <div class="stat"><b id="stat-miss">0</b><small>ミス</small></div>
+      <div class="stat"><b id="stat-acc">100%</b><small>正確率</small></div>
+    </div>
+  </section>
+
+  <!-- 結果 -->
+  <section id="result" class="panel result" hidden>
+    <h2>おつかれさまでした</h2>
+    <div class="stats big">
+      <div class="stat"><b id="r-kpm">0</b><small>打/分</small></div>
+      <div class="stat"><b id="r-time">0.0</b><small>秒</small></div>
+      <div class="stat"><b id="r-keys">0</b><small>打鍵</small></div>
+      <div class="stat"><b id="r-miss">0</b><small>ミス</small></div>
+      <div class="stat"><b id="r-acc">100%</b><small>正確率</small></div>
+    </div>
+    <button type="button" id="btn-retry" class="primary">もう一度 (Enter)</button>
+  </section>
+
+  <p class="foot">Esc = やり直し / Enter = 結果画面からもう一度</p>
+
+  <input id="keycatch" class="keycatch" autocomplete="off" autocapitalize="off"
+         autocorrect="off" spellcheck="false" aria-label="タイピング入力欄">
+</div>
+
+<script src="romaji-default.js"></script>
+<script src="problems-default.js"></script>
+<script src="engine.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

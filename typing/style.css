@@ -1,0 +1,127 @@
+:root {
+  --bg: #12151c;
+  --panel: #1a1f2b;
+  --line: #2b3243;
+  --fg: #e6e9f0;
+  --dim: #8c95a8;
+  --done: #4c5566;
+  --cur: #ffd45e;
+  --accent: #5cc8ff;
+  --miss: #ff6b6b;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: "Segoe UI", "Yu Gothic UI", "Hiragino Sans", Meiryo, sans-serif;
+  line-height: 1.6;
+}
+
+.app {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 24px 20px 48px;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+.topbar h1 { font-size: 18px; margin: 0; font-weight: 600; letter-spacing: .04em; }
+
+button {
+  font: inherit;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  padding: 6px 14px;
+  cursor: pointer;
+}
+button.ghost { background: transparent; color: var(--dim); }
+button.ghost:hover { color: var(--fg); border-color: var(--dim); }
+button.primary { background: var(--accent); border-color: var(--accent); color: #0d1117; font-weight: 600; }
+button.primary:hover { filter: brightness(1.1); }
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 16px;
+}
+
+.warning {
+  background: #4a3a12;
+  border: 1px solid #7a6220;
+  color: #ffe08a;
+  border-radius: 8px;
+  padding: 8px 14px;
+  margin: 0 0 16px;
+  font-size: 14px;
+}
+
+/* --- 設定 --- */
+.settings .setting { margin-bottom: 20px; }
+.settings .setting:last-child { margin-bottom: 0; }
+.settings label { display: block; font-size: 13px; color: var(--dim); margin-bottom: 6px; }
+.settings label.inline { display: inline-flex; align-items: center; gap: 6px; margin: 0; }
+.row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.settings input[type="file"] { font: inherit; font-size: 13px; color: var(--dim); max-width: 100%; }
+.settings input[type="number"] { font: inherit; width: 70px; background: #10131a; color: var(--fg);
+  border: 1px solid var(--line); border-radius: 5px; padding: 4px 6px; }
+.status { font-size: 13px; color: var(--accent); margin: 8px 0 0; }
+.status.error { color: var(--miss); }
+details { margin-top: 10px; font-size: 13px; color: var(--dim); }
+details summary { cursor: pointer; }
+details p, details ul { margin: 8px 0; }
+details code { background: #10131a; padding: 1px 5px; border-radius: 4px; }
+pre { background: #10131a; border: 1px solid var(--line); border-radius: 6px;
+  padding: 10px 12px; overflow-x: auto; font-size: 13px; tab-size: 8; }
+
+/* --- 練習 --- */
+.stage { transition: border-color .1s; }
+.stage.miss { border-color: var(--miss); }
+
+.stage-head {
+  display: flex; justify-content: space-between;
+  font-size: 13px; color: var(--dim); margin-bottom: 20px;
+}
+
+.display { font-size: 26px; margin: 0 0 10px; word-break: break-word; }
+.kana { font-size: 20px; margin: 0 0 18px; word-break: break-word; }
+.romaji {
+  font-family: Consolas, "SF Mono", Menlo, monospace;
+  font-size: 22px; letter-spacing: .06em;
+  margin: 0 0 18px; word-break: break-all; min-height: 1.6em;
+}
+
+.done { color: var(--done); }
+.todo { color: var(--fg); }
+.cur { color: var(--cur); border-bottom: 2px solid var(--cur); }
+.kana .todo { color: var(--dim); }
+
+.hint { font-size: 13px; color: var(--dim); min-height: 1.6em; margin: 0 0 16px; }
+
+.stats { display: flex; flex-wrap: wrap; gap: 24px; }
+.stat { display: flex; flex-direction: column; }
+.stat b { font-size: 20px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.stat small { font-size: 11px; color: var(--dim); }
+.stats.big .stat b { font-size: 30px; }
+
+/* --- 結果 --- */
+.result h2 { font-size: 18px; margin: 0 0 20px; }
+.result .stats { margin-bottom: 24px; }
+
+.foot { font-size: 12px; color: var(--dim); text-align: center; margin: 0; }
+
+/* 画面外だがフォーカス可能な入力欄 (IME 検知用) */
+.keycatch {
+  position: fixed; top: 0; left: 0;
+  width: 1px; height: 1px; padding: 0; border: 0;
+  opacity: 0; pointer-events: none;
+}

@@ -1,0 +1,15 @@
+# OS
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# エディタ
+.vscode/
+.idea/
+*.swp
+
+# Claude Code のローカル設定 (端末ごとの許可設定など)
+.claude/settings.local.json
+
+# 依存関係 (将来ツールを入れた場合)
+node_modules/
