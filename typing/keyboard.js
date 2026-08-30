@@ -69,7 +69,6 @@ var Keyboard = (function () {
   }
 
   // ホームポジションの目印。キーの刻印 (lo) で見るので JIS / US 共通
-  var HOME_ROW = 'asdfghjkl;';
   var HOME_ANCHOR = 'fj';
 
   function create(container, layoutName) {
@@ -91,7 +90,6 @@ var Keyboard = (function () {
         el.style.flexGrow = String(key.w);
 
         if (key.lo && HOME_ANCHOR.indexOf(key.lo) >= 0) el.classList.add('kb-anchor');
-        else if (key.lo && HOME_ROW.indexOf(key.lo) >= 0) el.classList.add('kb-home');
 
         if (key.label !== null) {
           el.classList.add('kb-sp');

@@ -156,13 +156,12 @@ pre { background: #10131a; border: 1px solid var(--line); border-radius: 6px;
 .kb-pend { opacity: .45; font-size: 11px; }   /* 未確定で残る分 */
 .kb-key.kb-dead { color: #4a5265; }           /* 打ちかけを無駄にするキー */
 
-/* ホームポジション。刻印が消えるので、位置が分かる程度に目立たせる */
-.kb-key.kb-home, .kb-key.kb-anchor { background: #1e2432; }
-.kb-key.kb-anchor { border-color: #3c465c; }
+/* ホームポジション。実物と同じく F と J に下線を引くだけ。
+   色を変えると無効なキーに見えてしまうので、背景・枠はそのまま */
 .kb-key.kb-anchor::after {
   content: ''; position: absolute; bottom: 3px; left: 50%;
   width: 14px; height: 2px; margin-left: -7px;
-  background: var(--dim); opacity: .8; border-radius: 1px;
+  background: var(--dim); border-radius: 1px;
 }
 
 .kb-key.next {                     /* 次に押すキー */
