@@ -33,7 +33,7 @@
     elapsed: 0,
     keys: 0,
     miss: 0,
-    waste: 0,
+    reducible: 0,
     tickId: 0,
     kb: null
   };
@@ -128,7 +128,7 @@
     S.elapsed = 0;
     S.keys = 0;
     S.miss = 0;
-    S.waste = 0;
+    S.reducible = 0;
     stopTick();
 
     el.result.hidden = true;
@@ -274,13 +274,15 @@
       flashMiss();
     } else {
       S.keys++;
-      S.waste += waste;
     }
     if (S.kb) S.kb.flash(ch, r === 'miss' ? 'bad' : (waste > 0 ? 'waste' : 'hit'));
     render();
     updateStats();
 
     if (r === 'done') {
+      // 短縮余地は打ち切った時点の入力で数える。バックスペースで
+      // 打ち直した分は残っていないので加算されない
+      S.reducible += S.target.reducible();
       if (S.qi + 1 < S.queue.length) loadProblem(S.qi + 1);
       else finish();
     }
@@ -315,9 +317,9 @@
     el.rKeys.textContent = S.keys;
     el.rMiss.textContent = S.miss;
     el.rAcc.textContent = acc + '%';
-    el.rWaste.textContent = S.waste;
-    el.rWasteNote.hidden = S.waste === 0;
-    el.rWasteNote.textContent = '打ち方を変えると、あと ' + S.waste
+    el.rWaste.textContent = S.reducible;
+    el.rWasteNote.hidden = S.reducible === 0;
+    el.rWasteNote.textContent = '打ち方を変えると、あと ' + S.reducible
       + ' 打鍵 減らせます。橙色に光ったキーがその場面です。';
 
     el.stage.hidden = true;
