@@ -80,6 +80,7 @@ button.primary:hover { filter: brightness(1.1); }
 .settings input[type="number"] { width: 70px; }
 .status { font-size: 13px; color: var(--accent); margin: 8px 0 0; }
 .status.error { color: var(--miss); }
+.status.hint-note { color: var(--dim); }
 details { margin-top: 10px; font-size: 13px; color: var(--dim); }
 details summary { cursor: pointer; }
 details p, details ul { margin: 8px 0; }
@@ -121,6 +122,8 @@ pre { background: #10131a; border: 1px solid var(--line); border-radius: 6px;
   display: grid;                   /* 入力欄と同じく控えで高さを確保する */
 }
 .romaji > * { grid-area: 1 / 1; min-width: 0; }
+/* display の指定は [hidden] の display:none より強いので、明示的に消す */
+.romaji[hidden] { display: none; }
 
 .done { color: var(--done); }
 .todo { color: var(--fg); }
