@@ -173,12 +173,14 @@
     var v = S.target.view();
     var kana = S.target.kana;
 
-    // よみは見本。減らさず全文を出し、次に入力するかなだけ印をつける
+    // よみは見本。減らさず全文を出し、次に入力するかなに印をつける。
+    // 1 打鍵でまとめて確定するぶん (きゃ など) はまとめて印をつける
     el.kana.textContent = '';
     el.kana.appendChild(spanRun(kana.slice(0, v.kanaIndex), 'todo'));
     if (v.kanaIndex < kana.length) {
-      el.kana.appendChild(spanRun(kana.charAt(v.kanaIndex), 'cur'));
-      el.kana.appendChild(spanRun(kana.slice(v.kanaIndex + 1), 'todo'));
+      var end = Math.min(v.kanaIndex + Math.max(1, v.groupLength), kana.length);
+      el.kana.appendChild(spanRun(kana.slice(v.kanaIndex, end), 'cur'));
+      el.kana.appendChild(spanRun(kana.slice(end), 'todo'));
     }
 
     // 入力欄は空から増えていく。打ち間違えても変換は続くので、
