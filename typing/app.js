@@ -317,8 +317,8 @@
     el.rAcc.textContent = acc + '%';
     el.rWaste.textContent = S.waste;
     el.rWasteNote.hidden = S.waste === 0;
-    el.rWasteNote.textContent = 'より少ない打鍵で打てる場面が ' + S.waste
-      + ' 回ありました。その打鍵はキーが橙色で光っています。';
+    el.rWasteNote.textContent = '打ち方を変えると、あと ' + S.waste
+      + ' 打鍵 減らせます。橙色に光ったキーがその場面です。';
 
     el.stage.hidden = true;
     el.result.hidden = false;
