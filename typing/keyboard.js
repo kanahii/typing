@@ -183,24 +183,29 @@ var Keyboard = (function () {
       for (var i = 0; i < els.length; i++) mark(els[i], 'next');
     }
 
+    // 打鍵が増える打ち方 (waste) は見逃しやすいので、少し長めに点ける
+    var FLASH_MS = { hit: 150, bad: 150, waste: 320 };
+
     function flashEl(el, cls) {
-      el.classList.remove('hit', 'bad');
+      el.classList.remove('hit', 'bad', 'waste');
       void el.offsetWidth;                             // 連打でも点き直すように
       el.classList.add(cls);
       clearTimeout(el.flashTimer);
-      el.flashTimer = setTimeout(function () { el.classList.remove(cls); }, 150);
+      el.flashTimer = setTimeout(function () {
+        el.classList.remove(cls);
+      }, FLASH_MS[cls] || 150);
     }
 
-    // 実際に押されたキーを光らせる
-    function flash(ch, ok) {
+    // 実際に押されたキーを光らせる。kind は 'hit' / 'waste' / 'bad'
+    function flash(ch, kind) {
       var hit = index.get(ch);
       if (!hit) return;
-      flashEl(hit.el, ok ? 'hit' : 'bad');
+      flashEl(hit.el, kind);
     }
 
-    function flashId(id, ok) {
+    function flashId(id, kind) {
       var els = byId.get(id) || [];
-      for (var i = 0; i < els.length; i++) flashEl(els[i], ok ? 'hit' : 'bad');
+      for (var i = 0; i < els.length; i++) flashEl(els[i], kind);
     }
 
     return {

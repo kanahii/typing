@@ -15,7 +15,8 @@
     romaji: $('romaji'), hint: $('hint'),
     statKpm: $('stat-kpm'), statKeys: $('stat-keys'), statMiss: $('stat-miss'), statAcc: $('stat-acc'),
     result: $('result'), rKpm: $('r-kpm'), rTime: $('r-time'), rKeys: $('r-keys'),
-    rMiss: $('r-miss'), rAcc: $('r-acc'), btnRetry: $('btn-retry'),
+    rMiss: $('r-miss'), rAcc: $('r-acc'), rWaste: $('r-waste'),
+    rWasteNote: $('r-waste-note'), btnRetry: $('btn-retry'),
     imeWarning: $('ime-warning'), keycatch: $('keycatch')
   };
 
@@ -32,6 +33,7 @@
     elapsed: 0,
     keys: 0,
     miss: 0,
+    waste: 0,
     tickId: 0,
     kb: null
   };
@@ -126,6 +128,7 @@
     S.elapsed = 0;
     S.keys = 0;
     S.miss = 0;
+    S.waste = 0;
     stopTick();
 
     el.result.hidden = true;
@@ -265,13 +268,15 @@
     }
 
     var r = S.target.input(ch);
+    var waste = S.target.lastWaste();      // この打鍵で増えてしまった打鍵数
     if (r === 'miss') {
       S.miss++;
       flashMiss();
     } else {
       S.keys++;
+      S.waste += waste;
     }
-    if (S.kb) S.kb.flash(ch, r !== 'miss');
+    if (S.kb) S.kb.flash(ch, r === 'miss' ? 'bad' : (waste > 0 ? 'waste' : 'hit'));
     render();
     updateStats();
 
@@ -285,7 +290,7 @@
   function handleBackspace() {
     if (!S.target || S.finished || !S.running) return;
     var done = S.target.backspace();
-    if (S.kb) S.kb.flashId('backspace', done);
+    if (S.kb) S.kb.flashId('backspace', done ? 'hit' : 'bad');
     if (done) render();
   }
 
@@ -310,6 +315,10 @@
     el.rKeys.textContent = S.keys;
     el.rMiss.textContent = S.miss;
     el.rAcc.textContent = acc + '%';
+    el.rWaste.textContent = S.waste;
+    el.rWasteNote.hidden = S.waste === 0;
+    el.rWasteNote.textContent = 'より少ない打鍵で打てる場面が ' + S.waste
+      + ' 回ありました。その打鍵はキーが橙色で光っています。';
 
     el.stage.hidden = true;
     el.result.hidden = false;
