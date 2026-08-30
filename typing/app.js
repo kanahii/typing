@@ -205,7 +205,6 @@
 
     var guide = spanRun('', 'in-live');
     if (v.guideDone) guide.appendChild(spanRun(v.guideDone, 'done'));
-    if (v.guidePending) guide.appendChild(spanRun(v.guidePending, 'done'));
     if (v.remaining) {
       guide.appendChild(spanRun(v.remaining.charAt(0), 'cur'));
       guide.appendChild(spanRun(v.remaining.slice(1), 'todo'));
