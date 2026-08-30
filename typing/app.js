@@ -21,6 +21,7 @@
 
   var S = {
     table: null,
+    tableChars: null,
     problems: [],        // [{ display, kana }]
     queue: [],
     qi: 0,
@@ -45,6 +46,7 @@
       return false;
     }
     S.table = table;
+    S.tableChars = new Set(table.alphabet);      // Shift 側に出す文字の判定用
     var st = table.stats;
     el.tableStatus.textContent = name + ' — ' + st.entries + ' 規則'
       + '（コメント ' + st.comments + ' 行'
@@ -135,6 +137,7 @@
       el.romaji.textContent = '';
       el.hint.textContent = '設定からお題かローマ字テーブルを見直してください';
       S.target = null;
+      if (S.kb) { S.kb.setLabels(null, null); S.kb.clearNext(); }
       return;
     }
     loadProblem(0);
@@ -192,8 +195,10 @@
       el.romaji.appendChild(spanRun(v.remaining.slice(1), 'todo'));
     }
 
-    // ずれているときに押すべきキーは BackSpace
     if (S.kb) {
+      // キーの表示は「いま押したら何が入力されるか」
+      S.kb.setLabels(function (ch) { return S.target.preview(ch); }, S.tableChars);
+      // ずれているときに押すべきキーは BackSpace
       if (v.onTrack) S.kb.setNext(v.remaining.charAt(0));
       else S.kb.setNextId('backspace');
     }

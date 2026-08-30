@@ -141,7 +141,8 @@ pre { background: #10131a; border: 1px solid var(--line); border-radius: 6px;
 .keyboard { display: flex; flex-direction: column; gap: 5px; min-width: 620px; }
 .kb-row { display: flex; gap: 5px; }
 .kb-key {
-  flex-basis: 0; min-width: 0; height: 38px;
+  position: relative;
+  flex-basis: 0; min-width: 0; height: 40px;
   display: flex; flex-direction: column;
   align-items: center; justify-content: center;
   border: 1px solid var(--line); border-radius: 5px;
@@ -150,13 +151,28 @@ pre { background: #10131a; border: 1px solid var(--line); border-radius: 6px;
   transition: background .08s, color .08s, border-color .08s;
 }
 .kb-key.kb-sp { font-size: 10px; }
-.kb-hi { font-size: 9px; opacity: .5; }
-.kb-lo { font-size: 12px; }
+.kb-hi { font-size: 9px; opacity: .5; min-height: 10px; }
+.kb-lo { font-size: 13px; white-space: nowrap; }
+.kb-pend { opacity: .45; font-size: 11px; }   /* 未確定で残る分 */
+.kb-key.kb-dead { color: #4a5265; }           /* 打ちかけを無駄にするキー */
+
+/* ホームポジション。刻印が消えるので、位置が分かる程度に目立たせる */
+.kb-key.kb-home, .kb-key.kb-anchor { background: #1e2432; }
+.kb-key.kb-anchor { border-color: #3c465c; }
+.kb-key.kb-anchor::after {
+  content: ''; position: absolute; bottom: 3px; left: 50%;
+  width: 14px; height: 2px; margin-left: -7px;
+  background: var(--dim); opacity: .8; border-radius: 1px;
+}
 
 .kb-key.next {                     /* 次に押すキー */
   border-color: var(--cur); color: var(--cur);
   background: rgba(255, 212, 94, .12);
 }
+/* 目立たせているキーでは、未確定分も読める濃さにする */
+.kb-key.next .kb-pend,
+.kb-key.hit .kb-pend,
+.kb-key.bad .kb-pend { opacity: .9; }
 .kb-key.next-mod {                 /* 一緒に押す Shift */
   border-color: var(--cur); color: var(--cur);
 }

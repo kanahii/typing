@@ -68,11 +68,16 @@ var Keyboard = (function () {
     });
   }
 
+  // ホームポジションの目印。キーの刻印 (lo) で見るので JIS / US 共通
+  var HOME_ROW = 'asdfghjkl;';
+  var HOME_ANCHOR = 'fj';
+
   function create(container, layoutName) {
     var layout = LAYOUTS[layoutName] || LAYOUTS.jis;
     var index = new Map();       // 文字 -> { el, shift }
     var byId = new Map();        // 'shift' などの特殊キー -> [el]
     var marked = [];             // いま next を付けているキー
+    var charKeys = [];           // 表示を差し替えるキー
 
     container.textContent = '';
 
@@ -85,20 +90,28 @@ var Keyboard = (function () {
         el.className = 'kb-key';
         el.style.flexGrow = String(key.w);
 
+        if (key.lo && HOME_ANCHOR.indexOf(key.lo) >= 0) el.classList.add('kb-anchor');
+        else if (key.lo && HOME_ROW.indexOf(key.lo) >= 0) el.classList.add('kb-home');
+
         if (key.label !== null) {
           el.classList.add('kb-sp');
           el.textContent = key.label;
-        } else if (key.hi && key.hi.toLowerCase() === key.lo) {
-          el.textContent = key.hi;                     // 英字キーは大文字だけ
         } else {
+          // 刻印ではなく「いま押したら入力される文字」を出すので、
+          // 中身は setLabels で差し替える
           var hi = document.createElement('span');
           hi.className = 'kb-hi';
-          hi.textContent = key.hi || ' ';
           var lo = document.createElement('span');
           lo.className = 'kb-lo';
-          lo.textContent = key.lo || '';
+          var out = document.createElement('span');
+          out.className = 'kb-out';
+          var pend = document.createElement('span');
+          pend.className = 'kb-pend';
+          lo.appendChild(out);
+          lo.appendChild(pend);
           el.appendChild(hi);
           el.appendChild(lo);
+          charKeys.push({ el: el, lo: key.lo, hi: key.hi, hiEl: hi, outEl: out, pendEl: pend });
         }
 
         if (key.lo && !index.has(key.lo)) index.set(key.lo, { el: el, shift: false });
@@ -113,6 +126,37 @@ var Keyboard = (function () {
 
       container.appendChild(r);
     });
+
+    // 各キーに「いま押したら何が入力されるか」を出す。
+    //   preview(ch) -> { out: 確定する文字, buf: 未確定で残る文字 } または null
+    //   known       : テーブルの規則に出てくる文字の集合。
+    //                 Shift 側は、ここに入っている文字だけ表示する
+    //                 (大文字などを出しても読みづらくなるだけなので)
+    function setLabels(preview, known) {
+      for (var i = 0; i < charKeys.length; i++) {
+        var rec = charKeys[i];
+        var p = preview ? preview(rec.lo) : null;
+
+        if (p && p.dropped) {
+          // 打ちかけを無駄にするキー。何が出るかを出しても読みづらいので、
+          // その打鍵で始まる分だけを薄く出す
+          rec.outEl.textContent = '';
+          rec.pendEl.textContent = p.buf || rec.lo;
+          rec.el.classList.add('kb-dead');
+        } else {
+          rec.outEl.textContent = p ? p.out : rec.lo;
+          rec.pendEl.textContent = p ? p.buf : '';
+          rec.el.classList.remove('kb-dead');
+        }
+
+        if (rec.hi && known && known.has(rec.hi)) {
+          var q = preview ? preview(rec.hi) : null;
+          rec.hiEl.textContent = q ? (q.dropped ? rec.hi : q.out + q.buf) : rec.hi;
+        } else {
+          rec.hiEl.textContent = '';
+        }
+      }
+    }
 
     function clearNext() {
       for (var i = 0; i < marked.length; i++) marked[i].classList.remove('next', 'next-mod');
@@ -162,6 +206,7 @@ var Keyboard = (function () {
     }
 
     return {
+      setLabels: setLabels,
       setNext: setNext,
       setNextId: setNextId,
       flash: flash,
