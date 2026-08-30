@@ -150,6 +150,7 @@
     S.qi = index;
     var p = S.queue[index];
     S.target = Engine.createTarget(S.table, p.kana);
+    S.guideGhost = new Array(S.target.maxGuideLength() + 1).join('m');
     el.display.textContent = p.display;
     el.qProgress.textContent = (index + 1) + ' / ' + S.queue.length;
     render();
@@ -178,22 +179,33 @@
     }
 
     // 入力欄は空から増えていく。打ち間違えても変換は続くので、
-    // 間違えた結果そのものが wrong として見える
+    // 間違えた結果そのものが wrong として見える。
+    // 打ち進めても折り返し行数が変わらないよう、お題の長さぶんの高さを
+    // 透明な控えで確保しておく (下のキーボードが上下に動かないように)
     el.input.textContent = '';
-    if (v.confirmed) el.input.appendChild(spanRun(v.confirmed, 'in-ok'));
-    if (v.wrong) el.input.appendChild(spanRun(v.wrong, 'in-err'));
-    if (v.pending) {
-      el.input.appendChild(spanRun(v.pending, v.onTrack ? 'in-pending' : 'in-pending bad'));
-    }
-    el.input.appendChild(spanRun('', 'caret'));
+    el.input.appendChild(spanRun(kana + '　', 'in-ghost'));
 
-    el.romaji.textContent = '';
-    if (v.guideDone) el.romaji.appendChild(spanRun(v.guideDone, 'done'));
-    if (v.guidePending) el.romaji.appendChild(spanRun(v.guidePending, 'done'));
-    if (v.remaining) {
-      el.romaji.appendChild(spanRun(v.remaining.charAt(0), 'cur'));
-      el.romaji.appendChild(spanRun(v.remaining.slice(1), 'todo'));
+    var live = spanRun('', 'in-live');
+    if (v.confirmed) live.appendChild(spanRun(v.confirmed, 'in-ok'));
+    if (v.wrong) live.appendChild(spanRun(v.wrong, 'in-err'));
+    if (v.pending) {
+      live.appendChild(spanRun(v.pending, v.onTrack ? 'in-pending' : 'in-pending bad'));
     }
+    live.appendChild(spanRun('', 'caret'));
+    el.input.appendChild(live);
+
+    // ガイドも綴りの取り方で長さが変わるので、最大長ぶんの高さを確保しておく
+    el.romaji.textContent = '';
+    el.romaji.appendChild(spanRun(S.guideGhost, 'in-ghost'));
+
+    var guide = spanRun('', 'in-live');
+    if (v.guideDone) guide.appendChild(spanRun(v.guideDone, 'done'));
+    if (v.guidePending) guide.appendChild(spanRun(v.guidePending, 'done'));
+    if (v.remaining) {
+      guide.appendChild(spanRun(v.remaining.charAt(0), 'cur'));
+      guide.appendChild(spanRun(v.remaining.slice(1), 'todo'));
+    }
+    el.romaji.appendChild(guide);
 
     if (S.kb) {
       // キーの表示は「いま押したら何が入力されるか」

@@ -103,13 +103,23 @@ pre { background: #10131a; border: 1px solid var(--line); border-radius: 6px;
 .io-label { display: block; font-size: 11px; color: var(--dim); margin-bottom: 6px; }
 .input {
   font-size: 24px; margin: 0 0 14px;
-  word-break: break-all; min-height: 1.6em;
+  word-break: break-all;
+  /* 行の高さを中身に依らず固定する。ここが伸び縮みすると
+     下のキーボードが上下に振動して見づらい */
+  line-height: 1.6; min-height: 1.6em;
+  /* 控え (in-ghost) と実際の入力 (in-live) を同じマスに重ねる。
+     高さは常にお題を打ち切ったときのぶんが確保される */
+  display: grid;
 }
+.input > * { grid-area: 1 / 1; min-width: 0; }
+.in-ghost { visibility: hidden; }
 .romaji {
   font-family: Consolas, "SF Mono", Menlo, monospace;
   font-size: 20px; letter-spacing: .06em;
   margin: 0; word-break: break-all; min-height: 1.6em;
+  display: grid;                   /* 入力欄と同じく控えで高さを確保する */
 }
+.romaji > * { grid-area: 1 / 1; min-width: 0; }
 
 .done { color: var(--done); }
 .todo { color: var(--fg); }
@@ -120,8 +130,9 @@ pre { background: #10131a; border: 1px solid var(--line); border-radius: 6px;
 .in-ok { color: var(--fg); }
 .in-pending {                      /* 未確定のローマ字 */
   color: var(--dim);
-  font-family: Consolas, "SF Mono", Menlo, monospace;
   border-bottom: 1px dashed var(--dim);
+  /* 等幅にすると行ボックスの高さが変わって下のレイアウトが動くので、
+     フォントは本文のまま。点線と色で未確定だと分かる */
 }
 .in-err {                          /* 目標とずれた入力。消すまで残る */
   color: #0d1117; background: var(--miss);
