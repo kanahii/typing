@@ -8,6 +8,8 @@
     fileTable: $('file-table'), btnTableReset: $('btn-table-reset'), tableStatus: $('table-status'),
     fileProblems: $('file-problems'), btnProblemsReset: $('btn-problems-reset'), problemsStatus: $('problems-status'),
     optShuffle: $('opt-shuffle'), optCount: $('opt-count'), btnApply: $('btn-apply'),
+    optLayout: $('opt-layout'), optKeyboard: $('opt-keyboard'), optRomaji: $('opt-romaji'),
+    keyboard: $('keyboard'), keyboardWrap: document.querySelector('.keyboard-wrap'),
     stage: $('stage'), qProgress: $('q-progress'), timer: $('timer'),
     display: $('display'), kana: $('kana'), input: $('input'),
     romaji: $('romaji'), hint: $('hint'),
@@ -29,7 +31,8 @@
     elapsed: 0,
     keys: 0,
     miss: 0,
-    tickId: 0
+    tickId: 0,
+    kb: null
   };
 
   /* ---------------- テーブル / お題の読み込み ---------------- */
@@ -189,10 +192,26 @@
       el.romaji.appendChild(spanRun(v.remaining.slice(1), 'todo'));
     }
 
+    // ずれているときに押すべきキーは BackSpace
+    if (S.kb) {
+      if (v.onTrack) S.kb.setNext(v.remaining.charAt(0));
+      else S.kb.setNextId('backspace');
+    }
+
     el.stage.classList.toggle('has-error', !v.onTrack);
     if (S.running) {
       el.hint.textContent = v.onTrack ? '' : 'BackSpace で消してください';
     }
+  }
+
+  function buildKeyboard() {
+    S.kb = Keyboard.create(el.keyboard, el.optLayout.value);
+    render();
+  }
+
+  function applyDisplayOptions() {
+    el.keyboardWrap.hidden = !el.optKeyboard.checked;
+    el.romaji.hidden = !el.optRomaji.checked;
   }
 
   function updateStats() {
@@ -235,6 +254,7 @@
     } else {
       S.keys++;
     }
+    if (S.kb) S.kb.flash(ch, r !== 'miss');
     render();
     updateStats();
 
@@ -247,7 +267,9 @@
   // かな 1 文字ぶんの取り消し。打鍵数・ミス数には影響させない
   function handleBackspace() {
     if (!S.target || S.finished || !S.running) return;
-    if (S.target.backspace()) render();
+    var done = S.target.backspace();
+    if (S.kb) S.kb.flashId('backspace', done);
+    if (done) render();
   }
 
   var missTimer = 0;
@@ -316,6 +338,10 @@
     if (el.settings.hidden) focusInput();
   });
 
+  el.optLayout.addEventListener('change', buildKeyboard);
+  el.optKeyboard.addEventListener('change', applyDisplayOptions);
+  el.optRomaji.addEventListener('change', applyDisplayOptions);
+
   el.btnApply.addEventListener('click', function () {
     el.settings.hidden = true;
     startSet();
@@ -357,6 +383,15 @@
   });
 
   /* ---------------- 起動 ---------------- */
+
+  Keyboard.layouts().forEach(function (l) {
+    var op = document.createElement('option');
+    op.value = l.id;
+    op.textContent = l.name;
+    el.optLayout.appendChild(op);
+  });
+  S.kb = Keyboard.create(el.keyboard, el.optLayout.value);
+  applyDisplayOptions();
 
   applyTable(DEFAULT_ROMAJI_TSV, DEFAULT_ROMAJI_TABLE_NAME);
   applyProblems(DEFAULT_PROBLEMS.map(function (p) {

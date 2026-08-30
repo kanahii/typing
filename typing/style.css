@@ -72,8 +72,11 @@ button.primary:hover { filter: brightness(1.1); }
 .settings label.inline { display: inline-flex; align-items: center; gap: 6px; margin: 0; }
 .row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
 .settings input[type="file"] { font: inherit; font-size: 13px; color: var(--dim); max-width: 100%; }
-.settings input[type="number"] { font: inherit; width: 70px; background: #10131a; color: var(--fg);
-  border: 1px solid var(--line); border-radius: 5px; padding: 4px 6px; }
+.settings input[type="number"], .settings select {
+  font: inherit; background: #10131a; color: var(--fg);
+  border: 1px solid var(--line); border-radius: 5px; padding: 4px 6px;
+}
+.settings input[type="number"] { width: 70px; }
 .status { font-size: 13px; color: var(--accent); margin: 8px 0 0; }
 .status.error { color: var(--miss); }
 details { margin-top: 10px; font-size: 13px; color: var(--dim); }
@@ -132,6 +135,37 @@ pre { background: #10131a; border: 1px solid var(--line); border-radius: 6px;
 }
 @keyframes blink { 0%, 55% { opacity: 1; } 56%, 100% { opacity: 0; } }
 .stage.has-error .caret { background: var(--miss); animation: none; }
+
+/* --- 画面内キーボード --- */
+.keyboard-wrap { overflow-x: auto; margin-bottom: 16px; padding-bottom: 4px; }
+.keyboard { display: flex; flex-direction: column; gap: 5px; min-width: 620px; }
+.kb-row { display: flex; gap: 5px; }
+.kb-key {
+  flex-basis: 0; min-width: 0; height: 38px;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  border: 1px solid var(--line); border-radius: 5px;
+  background: #171b25; color: var(--dim);
+  font-size: 13px; line-height: 1.15; overflow: hidden;
+  transition: background .08s, color .08s, border-color .08s;
+}
+.kb-key.kb-sp { font-size: 10px; }
+.kb-hi { font-size: 9px; opacity: .5; }
+.kb-lo { font-size: 12px; }
+
+.kb-key.next {                     /* 次に押すキー */
+  border-color: var(--cur); color: var(--cur);
+  background: rgba(255, 212, 94, .12);
+}
+.kb-key.next-mod {                 /* 一緒に押す Shift */
+  border-color: var(--cur); color: var(--cur);
+}
+.kb-key.hit {                      /* 実際に押された (正しい) */
+  background: var(--accent); border-color: var(--accent); color: #0d1117;
+}
+.kb-key.bad {                      /* 実際に押された (ミス) */
+  background: var(--miss); border-color: var(--miss); color: #0d1117;
+}
 
 .hint { font-size: 13px; color: var(--dim); min-height: 1.6em; margin: 0 0 16px; }
 

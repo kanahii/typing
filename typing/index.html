@@ -54,6 +54,17 @@ nk	ん	k</pre>
       <p class="status" id="problems-status"></p>
     </div>
 
+    <div class="setting">
+      <label>表示</label>
+      <div class="row">
+        <label class="inline">キーボード配列
+          <select id="opt-layout"></select>
+        </label>
+        <label class="inline"><input type="checkbox" id="opt-keyboard" checked> キーボードを表示</label>
+        <label class="inline"><input type="checkbox" id="opt-romaji" checked> ローマ字ガイドを表示</label>
+      </div>
+    </div>
+
     <div class="setting row">
       <label class="inline"><input type="checkbox" id="opt-shuffle" checked> ランダム出題</label>
       <label class="inline">出題数
@@ -77,6 +88,10 @@ nk	ん	k</pre>
       <span class="io-label">入力</span>
       <p id="input" class="input"></p>
       <p id="romaji" class="romaji"></p>
+    </div>
+
+    <div class="keyboard-wrap">
+      <div id="keyboard" class="keyboard"></div>
     </div>
 
     <p id="hint" class="hint">キーを押すと開始します</p>
@@ -111,6 +126,7 @@ nk	ん	k</pre>
 <script src="romaji-default.js"></script>
 <script src="problems-default.js"></script>
 <script src="engine.js"></script>
+<script src="keyboard.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
