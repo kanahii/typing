@@ -93,31 +93,31 @@
   /* ---------------- 出題 ---------------- */
 
   function buildQueue() {
-    // 現在のテーブルで打てないお題は除外する
-    var usable = [];
-    var skipped = [];
-    for (var i = 0; i < S.problems.length; i++) {
-      var p = S.problems[i];
-      if (Engine.createTarget(S.table, p.kana).typeable()) usable.push(p);
-      else skipped.push(p.display);
-    }
-
-    if (skipped.length) {
-      el.problemsStatus.textContent = S.problems.length + ' 件中 ' + skipped.length
-        + ' 件は現在のローマ字テーブルでは打てないため除外しました: ' + skipped.slice(0, 3).join(' / ')
-        + (skipped.length > 3 ? ' ほか' : '');
-      el.problemsStatus.className = 'status error';
-    }
-
-    var list = usable.slice();
+    var list = S.problems.slice();
     if (el.optShuffle.checked) {
       for (var j = list.length - 1; j > 0; j--) {
         var k = Math.floor(Math.random() * (j + 1));
         var t = list[j]; list[j] = list[k]; list[k] = t;
       }
     }
-    var count = Math.max(1, Math.min(parseInt(el.optCount.value, 10) || 10, list.length));
-    S.queue = list.slice(0, count);
+
+    // 打てるかどうかの判定はお題ごとに探索するので、全件は見ない。
+    // 出題数が埋まるまで前から確かめて、打てないものだけ飛ばす。
+    var want = Math.max(1, Math.min(parseInt(el.optCount.value, 10) || 10, list.length));
+    var queue = [];
+    var skipped = [];
+    for (var i = 0; i < list.length && queue.length < want; i++) {
+      if (Engine.createTarget(S.table, list[i].kana).typeable()) queue.push(list[i]);
+      else skipped.push(list[i].display);
+    }
+    S.queue = queue;
+
+    if (skipped.length) {
+      el.problemsStatus.textContent = '現在のローマ字テーブルでは打てないお題 '
+        + skipped.length + ' 件を出題から外しました: ' + skipped.slice(0, 3).join(' / ')
+        + (skipped.length > 3 ? ' ほか' : '');
+      el.problemsStatus.className = 'status error';
+    }
   }
 
   function startSet() {
