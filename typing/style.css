@@ -152,23 +152,23 @@ pre { background: #10131a; border: 1px solid var(--line); border-radius: 6px;
 .stage.has-error .caret { background: var(--miss); animation: none; }
 
 /* --- 画面内キーボード --- */
+/* キーは配列ファイルの x/y/w/h をもとに絶対配置する (L2 が矩形を要求するため) */
 .keyboard-wrap { overflow-x: auto; margin-bottom: 16px; padding-bottom: 4px; }
-.keyboard { display: flex; flex-direction: column; gap: 5px; min-width: 620px; }
-.kb-row { display: flex; gap: 5px; }
+.keyboard { position: relative; }
 .kb-key {
-  position: relative;
-  flex-basis: 0; min-width: 0; height: 40px;
+  position: absolute;
   display: flex; flex-direction: column;
   align-items: center; justify-content: center;
   border: 1px solid var(--line); border-radius: 5px;
   background: #171b25; color: var(--dim);
-  font-size: 13px; line-height: 1.15; overflow: hidden;
+  font-size: 1em; line-height: 1.15; overflow: hidden;
+  box-sizing: border-box;
   transition: background .08s, color .08s, border-color .08s;
 }
-.kb-key.kb-sp { font-size: 10px; }
-.kb-hi { font-size: 9px; opacity: .5; min-height: 10px; }
-.kb-lo { font-size: 13px; white-space: nowrap; }
-.kb-pend { opacity: .45; font-size: 11px; }   /* 未確定で残る分 */
+.kb-key.kb-sp { font-size: .74em; }
+.kb-hi { font-size: .68em; opacity: .5; min-height: .8em; }
+.kb-lo { font-size: 1em; white-space: nowrap; }
+.kb-pend { opacity: .45; font-size: .85em; }   /* 未確定で残る分 */
 .kb-key.kb-dead { color: #4a5265; }           /* 打ちかけを無駄にするキー */
 
 /* ホームポジション。実物と同じく F と J に下線を引くだけ。
@@ -212,7 +212,14 @@ pre { background: #10131a; border: 1px solid var(--line); border-radius: 6px;
 /* --- 結果 --- */
 .result h2 { font-size: 18px; margin: 0 0 20px; }
 .result .stats { margin-bottom: 20px; }
-.note { font-size: 13px; color: var(--waste); margin: 0 0 20px; }
+.note { font-size: 13px; color: var(--waste); margin: 0 0 12px; }
+.note.advice { color: var(--accent); }
+.result .note:last-of-type { margin-bottom: 20px; }
+
+/* --- 教示 (L2 の文書部分。キーボード外に置く) --- */
+.lesson-doc { margin: 0 0 16px; font-size: 14px; }
+.lesson-doc p { margin: 0 0 8px; }
+.lesson-doc .doc-next { color: var(--dim); font-size: 13px; }
 
 .foot { font-size: 12px; color: var(--dim); text-align: center; margin: 0; }
 

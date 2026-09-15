@@ -6,9 +6,9 @@
  * 長音は「ー」(既定テーブルでは - で入力)。
  * 英数字は既定テーブルで規則のある文字が変換されてしまうため使わない。
  */
-var DEFAULT_PROBLEMS_NAME = '既定のお題';
+export const DEFAULT_PROBLEMS_NAME = '既定のお題';
 
-var DEFAULT_PROBLEMS = [
+export const DEFAULT_PROBLEMS = [
   // ---- 日常の短文 ----
   ['今日はいい天気ですね', 'きょうはいいてんきですね'],
   ['明日の会議は十時からです', 'あすのかいぎはじゅうじからです'],

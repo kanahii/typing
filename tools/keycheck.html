@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>keydown 確認</title>
+<style>
+  body { margin: 0; padding: 24px; background: #12151c; color: #e6e9f0;
+         font-family: "Segoe UI", "Yu Gothic UI", Meiryo, sans-serif; line-height: 1.6; }
+  h1 { font-size: 16px; margin: 0 0 4px; }
+  p  { font-size: 13px; color: #8c95a8; margin: 0 0 16px; }
+  table { border-collapse: collapse; font-family: Consolas, monospace; font-size: 13px; }
+  th, td { border: 1px solid #2b3243; padding: 4px 10px; text-align: left; white-space: pre; }
+  th { color: #8c95a8; font-weight: normal; }
+  tr.recent td { background: #1d2432; }
+  .want { color: #ffd45e; }
+  .ok { color: #5cc8ff; }
+  .ng { color: #ff6b6b; }
+  #sum { margin: 16px 0; font-size: 13px; }
+  #sum div { margin-bottom: 2px; }
+  button { font: inherit; background: transparent; color: #8c95a8;
+           border: 1px solid #2b3243; border-radius: 6px; padding: 4px 12px; cursor: pointer; }
+  #ime { background: #4a3a12; border: 1px solid #7a6220; color: #ffe08a;
+         border-radius: 8px; padding: 8px 14px; margin-bottom: 16px; font-size: 13px; }
+</style>
+</head>
+<body>
+<h1>keydown の code / key / shiftKey 確認</h1>
+<p>
+  AZIK は <code>;</code>（っ）と <code>:</code>（ー）を使うため、JIS / US どちらでも
+  同じテーブルで動くことを確かめる必要があります。下の一覧のキーを順に叩いてください。
+  IME をオンにした場合の挙動も見ておきます。
+</p>
+
+<div id="ime" hidden>日本語入力(IME)がオンです。この状態の値も記録に残ります。</div>
+
+<div id="sum"></div>
+<button type="button" id="clear">記録を消す</button>
+
+<table>
+  <thead><tr><th>入力</th><th>code</th><th>key</th><th>shift</th><th>keyCode</th><th>isComposing</th></tr></thead>
+  <tbody id="log"></tbody>
+</table>
+
+<script>
+(function () {
+  'use strict';
+
+  // 確認したい文字と、JIS / US で期待する { code, shift }
+  var WANT = [
+    { ch: ';', jis: 'Semicolon(shift なし)',   us: 'Semicolon(shift なし)' },
+    { ch: ':', jis: 'Quote(shift なし)',       us: 'Semicolon + Shift' },
+    { ch: '@', jis: 'BracketLeft(shift なし)', us: 'Digit2 + Shift' },
+    { ch: '[', jis: 'BracketRight(shift なし)', us: 'BracketLeft(shift なし)' },
+    { ch: ']', jis: 'Backslash(shift なし)',   us: 'BracketRight(shift なし)' },
+    { ch: '-', jis: 'Minus(shift なし)',       us: 'Minus(shift なし)' },
+    { ch: '^', jis: 'Equal(shift なし)',       us: 'Digit6 + Shift' },
+    { ch: '_', jis: 'IntlRo + Shift',          us: 'Minus + Shift' },
+    { ch: "'", jis: 'Digit7 + Shift',          us: 'Quote(shift なし)' },
+    { ch: 'z', jis: 'KeyZ(shift なし)',        us: 'KeyZ(shift なし)' }
+  ];
+
+  var log = document.getElementById('log');
+  var sum = document.getElementById('sum');
+  var seen = {};          // 文字 -> 観測した code/shift
+
+  function render() {
+    sum.textContent = '';
+    WANT.forEach(function (w) {
+      var got = seen[w.ch];
+      var d = document.createElement('div');
+      var mark = got ? '観測: ' + got : '未入力';
+      d.className = got ? 'ok' : 'want';
+      d.textContent = '「' + w.ch + '」  ' + mark
+        + '   / 期待 JIS: ' + w.jis + '  US: ' + w.us;
+      sum.appendChild(d);
+    });
+  }
+
+  document.addEventListener('keydown', function (e) {
+    // ブラウザのショートカットは邪魔しない
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    if (e.key === 'F5' || e.key === 'F12') return;
+    e.preventDefault();
+
+    if (e.key.length === 1) {
+      seen[e.key] = e.code + (e.shiftKey ? ' + Shift' : '(shift なし)');
+    }
+
+    var tr = document.createElement('tr');
+    tr.className = 'recent';
+    [ e.key.length === 1 ? e.key : '(' + e.key + ')',
+      e.code, JSON.stringify(e.key), String(e.shiftKey), String(e.keyCode),
+      String(!!e.isComposing) ].forEach(function (v) {
+      var td = document.createElement('td');
+      td.textContent = v;
+      tr.appendChild(td);
+    });
+    log.insertBefore(tr, log.firstChild);
+    var rows = log.querySelectorAll('tr');
+    for (var i = 1; i < rows.length; i++) rows[i].className = '';
+    while (log.children.length > 40) log.removeChild(log.lastChild);
+
+    render();
+  });
+
+  // IME がオンだと composition が始まるので、それを検知して知らせる
+  var probe = document.createElement('input');
+  probe.style.cssText = 'position:fixed;top:0;left:0;width:1px;height:1px;opacity:0;';
+  document.body.appendChild(probe);
+  probe.focus();
+  probe.addEventListener('compositionstart', function () {
+    document.getElementById('ime').hidden = false;
+  });
+  document.addEventListener('mousedown', function () { setTimeout(function () { probe.focus(); }, 0); });
+
+  document.getElementById('clear').addEventListener('click', function () {
+    log.textContent = ''; seen = {}; render(); probe.focus();
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>

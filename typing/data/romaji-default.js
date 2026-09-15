@@ -4,9 +4,9 @@
  * タブ区切り形式。ここでは JS の文字列配列として持ち、"\t" がタブになる。
  * 実行時に romaji-table ファイルを読み込むと、このテーブルは置き換えられる。
  */
-var DEFAULT_ROMAJI_TABLE_NAME = '既定テーブル (Google 日本語入力 互換)';
+export const DEFAULT_ROMAJI_TABLE_NAME = '既定テーブル (Google 日本語入力 互換)';
 
-var DEFAULT_ROMAJI_TSV = [
+export const DEFAULT_ROMAJI_TSV = [
   '# ------------------------------------------------------------',
   '# 既定ローマ字テーブル',
   '# 列: 入力 <TAB> 出力 <TAB> 次の入力',
