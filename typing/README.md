@@ -415,3 +415,7 @@ ky      <TAB>        <TAB> きy
 BackSpace は打鍵数・ミス数には数えません。
 
 IME はオフ（直接入力）にしてください。オンのまま打つと画面上部に警告が出ます。
+
+## ライセンス
+
+MIT License — [LICENSE](../LICENSE)
