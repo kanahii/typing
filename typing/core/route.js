@@ -71,11 +71,19 @@ export function analyze(table, kana, opts) {
   const cached = table.routeCache.get(cacheKey);
   if (cached) return cached;
 
-  // 打鍵候補: 規則に出てくる文字 + お題に含まれる ASCII (英数字・空白など)
+  /*
+   * 打鍵候補 = 規則に出てくる文字 + お題に含まれる「配列で直接打てる文字」。
+   *
+   * 規則が無い打鍵はそのまま入力されるので、キーボードで出せる文字は打てる。
+   * 数字・大文字・記号がこれに当たる。逆に規則のある文字は変換されるので
+   * 打てない (既定テーブルなら A と K は打てるが a は「あ」になる)。
+   * お題に出てこない文字を足しても目的地に近づかないので、ここでは見ない。
+   */
+  const canType = (opts && opts.canType) || (ch => ch.charCodeAt(0) < 0x80);
   const alphabet = table.alphabet.slice();
   const known = new Set(alphabet);
   for (const ch of kana) {
-    if (ch.charCodeAt(0) < 0x80 && !known.has(ch)) { known.add(ch); alphabet.push(ch); }
+    if (!known.has(ch) && canType(ch)) { known.add(ch); alphabet.push(ch); }
   }
 
   const nodes = new Map();
@@ -308,7 +316,7 @@ export function plan(table, kana, opts) {
 
 /*
  * 段階での経路と全タグでの経路を比べる (§6「2 つの経路長」)。
- * 無駄 = cost_stage - cost_full。「まだ習っていない拡張が使える箇所」の量。
+ * 短縮余地 = cost_stage - cost_full。まだ解禁していない打ち方で短くできる量。
  * 0 に近いほどその段階で練習する価値がある。
  */
 export function compare(fullTable, stageTable, kana, opts) {
@@ -319,7 +327,7 @@ export function compare(fullTable, stageTable, kana, opts) {
     ok: stage.ok && full.ok,
     stage: stage,
     full: full,
-    waste: (stage.ok && full.ok) ? stage.cost - full.cost : Infinity,
+    reducible: (stage.ok && full.ok) ? stage.cost - full.cost : Infinity,
     reason: !stage.ok ? 'この段階の打鍵では打ち切れない: ' + stage.reason
           : !full.ok ? 'このテーブルでは打ち切れない: ' + full.reason
           : null

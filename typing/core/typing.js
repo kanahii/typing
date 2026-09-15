@@ -35,7 +35,7 @@ export function createTarget(table, kana, hintTable, opts) {
   let pendingKeys = 0;
   let correct = 0;
   let miss = 0;
-  let lastWaste = 0;             // 直前の打鍵で増えてしまった打鍵数
+  let lastExtra = 0;             // 直前の打鍵で増えた打鍵数
   let usedTags = new Set();      // 実際に使った規則のタグ
 
   function matchLen() {
@@ -83,7 +83,7 @@ export function createTarget(table, kana, hintTable, opts) {
     }
     text += r.out;
     buf = r.buf;
-    lastWaste = 0;
+    lastExtra = 0;
 
     if (!onTrack()) { miss++; return 'miss'; }
 
@@ -93,7 +93,7 @@ export function createTarget(table, kana, hintTable, opts) {
     // 増えてしまった打鍵数 (じゃ を zya と打ったときの z など)
     const after = left();
     if (before !== null && after !== null && after - before + 1 > 0) {
-      lastWaste = after - before + 1;
+      lastExtra = after - before + 1;
     }
     correct++;
     return isComplete() ? 'done' : 'ok';
@@ -180,7 +180,7 @@ export function createTarget(table, kana, hintTable, opts) {
     preview: preview,
     view: view,
     isComplete: isComplete,
-    lastWaste: () => lastWaste,
+    lastExtra: () => lastExtra,
     usedKeys: usedKeys,
     optimalKeys: optimalKeys,
     reducible: reducible,

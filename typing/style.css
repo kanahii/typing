@@ -8,7 +8,7 @@
   --cur: #ffd45e;
   --accent: #5cc8ff;
   --miss: #ff6b6b;
-  --waste: #ff922b;
+  --longer: #ff922b;
 }
 
 * { box-sizing: border-box; }
@@ -169,7 +169,7 @@ pre { background: #10131a; border: 1px solid var(--line); border-radius: 6px;
 .kb-hi { font-size: .68em; opacity: .5; min-height: .8em; }
 .kb-lo { font-size: 1em; white-space: nowrap; }
 .kb-pend { opacity: .45; font-size: .85em; }   /* 未確定で残る分 */
-.kb-key.kb-dead { color: #4a5265; }           /* 打ちかけを無駄にするキー */
+.kb-key.kb-dead { color: #4a5265; }           /* 打ちかけが消えるキー */
 
 /* ホームポジション。実物と同じく F と J に下線を引くだけ。
    色を変えると無効なキーに見えてしまうので、背景・枠はそのまま */
@@ -186,7 +186,7 @@ pre { background: #10131a; border: 1px solid var(--line); border-radius: 6px;
 /* 目立たせているキーでは、未確定分も読める濃さにする */
 .kb-key.next .kb-pend,
 .kb-key.hit .kb-pend,
-.kb-key.waste .kb-pend,
+.kb-key.longer .kb-pend,
 .kb-key.bad .kb-pend { opacity: .9; }
 .kb-key.next-mod {                 /* 一緒に押す Shift */
   border-color: var(--cur); color: var(--cur);
@@ -194,8 +194,8 @@ pre { background: #10131a; border: 1px solid var(--line); border-radius: 6px;
 .kb-key.hit {                      /* 実際に押された (正しい) */
   background: var(--accent); border-color: var(--accent); color: #0d1117;
 }
-.kb-key.waste {                    /* 実際に押された (打鍵数が増える打ち方) */
-  background: var(--waste); border-color: var(--waste); color: #0d1117;
+.kb-key.longer {                   /* 実際に押された (より短い打ち方がある) */
+  background: var(--longer); border-color: var(--longer); color: #0d1117;
 }
 .kb-key.bad {                      /* 実際に押された (ミス) */
   background: var(--miss); border-color: var(--miss); color: #0d1117;
@@ -212,7 +212,7 @@ pre { background: #10131a; border: 1px solid var(--line); border-radius: 6px;
 /* --- 結果 --- */
 .result h2 { font-size: 18px; margin: 0 0 20px; }
 .result .stats { margin-bottom: 20px; }
-.note { font-size: 13px; color: var(--waste); margin: 0 0 12px; }
+.note { font-size: 13px; color: var(--longer); margin: 0 0 12px; }
 .note.advice { color: var(--accent); }
 .result .note:last-of-type { margin-bottom: 20px; }
 

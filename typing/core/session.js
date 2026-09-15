@@ -328,17 +328,17 @@ export function createSession(container, config) {
     begin();
 
     const r = target.input(ch);
-    const waste = target.lastWaste();
+    const extra = target.lastExtra();
     if (r === 'miss') {
       miss++; flashMiss();
       // ミスしたら答えを見せる (想起の試行を先にさせてから提示する形)
       if (options.hintKeyboard === 'onHesitate') hesitateShown = true;
     } else { keys++; }
     armHesitate();
-    keyboard.flash(ch, r === 'miss' ? 'bad' : (waste > 0 ? 'waste' : 'hit'));
+    keyboard.flash(ch, r === 'miss' ? 'bad' : (extra > 0 ? 'longer' : 'hit'));
     render();
     updateStats();
-    emit('input', { char: ch, result: r, waste: waste });
+    emit('input', { char: ch, result: r, extra: extra });
 
     if (r === 'done') {
       // 短縮余地は打ち切った時点の入力で数える。バックスペースで

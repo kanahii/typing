@@ -146,11 +146,11 @@ export function create(container, layoutId) {
     if (cell) mark(cell.el, 'next');
   }
 
-  // 打鍵が増える打ち方 (waste) は見逃しやすいので、少し長めに点ける
-  const FLASH_MS = { hit: 150, bad: 150, waste: 320 };
+  // より短い打ち方があるとき (longer) は見逃しやすいので、少し長めに点ける
+  const FLASH_MS = { hit: 150, bad: 150, longer: 320 };
 
   function flashEl(el, kind) {
-    el.classList.remove('hit', 'bad', 'waste');
+    el.classList.remove('hit', 'bad', 'longer');
     void el.offsetWidth;                             // 連打でも点き直すように
     el.classList.add(kind);
     clearTimeout(el.flashTimer);

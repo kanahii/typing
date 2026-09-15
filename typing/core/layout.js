@@ -168,9 +168,14 @@ export function charFromEvent(layout, ev) {
 
 /*
  * 経路計算に渡す配列情報。
- * 打鍵数が同じ経路が複数あるとき、Shift の少ない方を選ばせるために使う。
- * これで「ー」は JIS なら「:」、US なら「'」と、テーブルを分けずに
- * 配列に応じた案内になる。
+ *
+ * shiftOf  打鍵数が同じ経路が複数あるとき、Shift の少ない方を選ばせる。
+ *          これで「ー」は JIS なら「:」、US なら「'」と、テーブルを分けずに
+ *          配列に応じた案内になる。
+ * canType  その文字をこの配列で直接打てるか。ローマ字テーブルに規則が無い
+ *          文字は打鍵がそのまま入力されるので、配列にあるなら打てる。
+ *          数字・大文字・記号がこれに当たる (a は「あ」に変換されるので
+ *          打てないが、A と K は打てる、という区別になる)。
  */
 export function routeOpts(layout) {
   return {
@@ -178,6 +183,9 @@ export function routeOpts(layout) {
     shiftOf(ch) {
       const hit = layout.byChar.get(ch);
       return hit ? hit.shift : false;
+    },
+    canType(ch) {
+      return layout.byChar.has(ch);
     }
   };
 }
