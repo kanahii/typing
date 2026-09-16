@@ -15,6 +15,7 @@
  * たどるのではなくテーブルを実際にシミュレートして行う。
  */
 import { convert } from './convert.js';
+import { equivalents, align, standIn } from './width.js';
 
 const NO_RULE_ORD = 0xffff;
 const MAX_BUF = 32;
@@ -80,10 +81,15 @@ export function analyze(table, kana, opts) {
    * お題に出てこない文字を足しても目的地に近づかないので、ここでは見ない。
    */
   const canType = (opts && opts.canType) || (ch => ch.charCodeAt(0) < 0x80);
+  // 全角・半角の片方しか出せない記号は、出せる方で打てたことにする
+  const pairs = equivalents(table, opts);
   const alphabet = table.alphabet.slice();
   const known = new Set(alphabet);
   for (const ch of kana) {
     if (!known.has(ch) && canType(ch)) { known.add(ch); alphabet.push(ch); }
+    // 「？」のように直接は打てない文字は、対になる「?」を打鍵候補に足す
+    const alt = standIn(pairs, ch);
+    if (alt && !known.has(alt) && canType(alt)) { known.add(alt); alphabet.push(alt); }
   }
 
   const nodes = new Map();
@@ -107,13 +113,14 @@ export function analyze(table, kana, opts) {
     const cur = order[qi];
     for (const ch of alphabet) {
       const r = convert(table, cur.buf, ch);
-      if (!kana.startsWith(r.out, cur.i)) continue;    // 目標からずれる
+      const out = align(pairs, r.out, kana, cur.i);
+      if (!kana.startsWith(out, cur.i)) continue;      // 目標からずれる
       if (r.buf.length > MAX_BUF) continue;            // 暴走よけ
       const edge = {
-        c: ch, ord: r.ord, outLen: r.out.length, tags: r.tags,
+        c: ch, ord: r.ord, outLen: out.length, tags: r.tags,
         pref: preferred(prefer, r.tags) ? 0 : 1,
         shift: shiftOf ? (shiftOf(ch) ? 1 : 0) : 0,
-        from: cur, to: node(cur.i + r.out.length, r.buf)
+        from: cur, to: node(cur.i + out.length, r.buf)
       };
       cur.out.push(edge);
       edge.to.from.push(edge);

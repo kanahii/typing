@@ -18,6 +18,7 @@
  * 経路計算は route.js に任せる (実装を 1 本に保つ)。
  */
 import { convert } from './convert.js';
+import { equivalents, align } from './width.js';
 import {
   canFinish, stepsLeft, remainingFrom, keysTo, groupLength, maxGuideLength, plan
 } from './route.js';
@@ -25,6 +26,8 @@ import {
 export function createTarget(table, kana, hintTable, opts) {
   const hint = hintTable || table;
   const ro = opts || undefined;   // 配列情報 (Shift 要否のタイブレーク)
+  // 全角・半角の片方しか出せない記号は、出せる方で打てたことにする
+  const pairs = equivalents(table, ro);
 
   let text = '';
   let buf = '';
@@ -74,14 +77,15 @@ export function createTarget(table, kana, hintTable, opts) {
   function input(ch) {
     const before = left();
     const r = convert(table, buf, ch);
+    const out = align(pairs, r.out, kana, text.length);
 
     pendingKeys++;
-    if (r.out !== '') {          // ここまでの打鍵で r.out が出た
+    if (out !== '') {            // ここまでの打鍵で out が出た
       costs.push(pendingKeys);
-      for (let n = 1; n < r.out.length; n++) costs.push(0);
+      for (let n = 1; n < out.length; n++) costs.push(0);
       pendingKeys = 0;
     }
-    text += r.out;
+    text += out;
     buf = r.buf;
     lastExtra = 0;
 
@@ -145,7 +149,7 @@ export function createTarget(table, kana, hintTable, opts) {
    */
   function preview(ch) {
     const r = convert(hint, buf, ch);
-    return { out: r.out, buf: r.buf, dropped: r.dropped };
+    return { out: align(pairs, r.out, kana, text.length), buf: r.buf, dropped: r.dropped };
   }
 
   /*
