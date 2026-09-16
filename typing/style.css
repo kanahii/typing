@@ -212,7 +212,8 @@ pre { background: #10131a; border: 1px solid var(--line); border-radius: 6px;
 /* --- 結果 --- */
 .result h2 { font-size: 18px; margin: 0 0 20px; }
 .result .stats { margin-bottom: 20px; }
-.note { font-size: 13px; color: var(--longer); margin: 0 0 12px; }
+/* 結果の注記。短縮は必ずしも良いとは限らないので、主張は弱くしておく */
+.note { font-size: 13px; color: var(--dim); margin: 0 0 12px; }
 .note.advice { color: var(--accent); }
 .result .note:last-of-type { margin-bottom: 20px; }
 

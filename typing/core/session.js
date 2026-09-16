@@ -340,23 +340,36 @@ export function createSession(container, config) {
     updateStats();
     emit('input', { char: ch, result: r, extra: extra });
 
-    if (r === 'done') {
-      // 短縮余地は打ち切った時点の入力で数える。バックスペースで
-      // 打ち直した分は残っていないので加算されない
-      reducible += target.reducible();
-      for (const t of target.usedTags()) usedTags.add(t);
-      wordSeen++;
-      hesitateShown = false;
-      advance();
-    }
+    if (r === 'done') completeItem();
+  }
+
+  /*
+   * お題を打ち切ったときの締め。
+   * 短縮余地は打ち切った時点の入力で数える。バックスペースで打ち直した分は
+   * 残っていないので加算されない。
+   */
+  function completeItem() {
+    reducible += target.reducible();
+    for (const t of target.usedTags()) usedTags.add(t);
+    wordSeen++;
+    hesitateShown = false;
+    advance();
   }
 
   function handleBackspace() {
     if (!target || finished || !running) return;
     const done = target.backspace();
     keyboard.flashCode('Backspace', done ? 'hit' : 'bad');
-    if (done) render();
+    if (!done) return;
+    render();
+    // 消した結果、入力がお題と一致することがある (「あしゅ」から「あし」など)。
+    // 打ち切った状態には違いないので、次のお題へ進める
+    if (target.isComplete()) completeItem();
   }
+
+  /* Shift を押している間は、キーの表示をシフト側に切り替える */
+  function syncShift(e) { keyboard.setShift(e.shiftKey); }
+  function clearShift() { keyboard.setShift(false); }
 
   function onKeyDown(e) {
     if (e.ctrlKey || e.metaKey || e.altKey) return;
@@ -389,6 +402,9 @@ export function createSession(container, config) {
   }
 
   document.addEventListener('keydown', onKeyDown);
+  document.addEventListener('keydown', syncShift);
+  document.addEventListener('keyup', syncShift);
+  window.addEventListener('blur', clearShift);
 
   ui.keycatch.addEventListener('compositionstart', () => {
     ui.keycatch.value = '';
@@ -446,6 +462,9 @@ export function createSession(container, config) {
     reset: reset,
     destroy() {
       document.removeEventListener('keydown', onKeyDown);
+      document.removeEventListener('keydown', syncShift);
+      document.removeEventListener('keyup', syncShift);
+      window.removeEventListener('blur', clearShift);
       stopTick();
       keyboard.destroy();
       container.textContent = '';

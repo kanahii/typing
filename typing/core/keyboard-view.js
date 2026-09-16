@@ -85,30 +85,59 @@ export function create(container, layoutId) {
   /*
    * 各キーに「いま押したら何が入力されるか」を出す。
    *   preview(ch) -> { out, buf, dropped } または null
-   *   known       テーブルの規則に出てくる文字の集合。Shift 側は、ここに
-   *               入っている文字だけ表示する (大文字などは読みづらいだけ)
+   *   known       テーブルの規則に出てくる文字の集合。小さく添える側は、
+   *               ここに入っている文字だけ表示する (大文字などは読みづらいだけ)
    */
+  let labelPreview = null;
+  let labelKnown = null;
+  let shiftHeld = false;
+
   function setLabels(preview, known) {
+    labelPreview = preview || null;
+    labelKnown = known || null;
+    renderLabels();
+  }
+
+  /*
+   * Shift を押している間は、シフト側で入る文字をキートップに出す。
+   * 「/」と書かれたキーを見ながら打って「?」が出てくるのは不可解なので、
+   * 押している修飾に合わせて表示を切り替える。
+   */
+  function setShift(on) {
+    if (!!on === shiftHeld) return;
+    shiftHeld = !!on;
+    renderLabels();
+  }
+
+  function renderLabels() {
+    const preview = labelPreview;
+    const known = labelKnown;
     cells.forEach(c => {
       if (!c.outEl) return;
-      const lo = c.key.lo;
-      const p = (preview && lo !== null) ? preview(lo) : null;
+      const main = shiftHeld ? c.key.hi : c.key.lo;
+      const sub = shiftHeld ? null : c.key.hi;   // Shift 中は素の側を出さない
+      const p = (preview && main !== null) ? preview(main) : null;
 
-      if (p && p.dropped) {
+      if (main === null) {
+        // この配列では Shift を押しても何も入らないキー
+        c.outEl.textContent = '';
+        c.pendEl.textContent = '';
+        c.el.classList.remove('kb-dead');
+      } else if (p && p.dropped) {
         // 打ちかけが消えるキー。何が出るかを出しても読みづらいので、
         // その打鍵で始まる分だけを薄く出す
         c.outEl.textContent = '';
-        c.pendEl.textContent = p.buf || lo;
+        c.pendEl.textContent = p.buf || main;
         c.el.classList.add('kb-dead');
       } else {
-        c.outEl.textContent = p ? p.out : (lo === null ? '' : lo);
+        c.outEl.textContent = p ? p.out : main;
         c.pendEl.textContent = p ? p.buf : '';
         c.el.classList.remove('kb-dead');
       }
 
-      if (c.key.hi !== null && known && known.has(c.key.hi)) {
-        const q = preview ? preview(c.key.hi) : null;
-        c.hiEl.textContent = q ? (q.dropped ? c.key.hi : q.out + q.buf) : c.key.hi;
+      if (sub !== null && known && known.has(sub)) {
+        const q = preview ? preview(sub) : null;
+        c.hiEl.textContent = q ? (q.dropped ? sub : q.out + q.buf) : sub;
       } else {
         c.hiEl.textContent = '';
       }
@@ -182,6 +211,7 @@ export function create(container, layoutId) {
   function setLayout(id) {
     layout = Layout.get(id);
     render();
+    renderLabels();     // キーを作り直したので、ラベルを付け直す
   }
 
   const onResize = () => place();
@@ -193,6 +223,7 @@ export function create(container, layoutId) {
     setLayout: setLayout,
     get layout() { return layout; },
     setLabels: setLabels,
+    setShift: setShift,
     setNext: setNext,
     setNextCode: setNextCode,
     clearNext: clearNext,
