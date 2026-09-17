@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ローマ字タイピング練習（自由設定）</title>
+<title>ローマ字タイピング練習</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -35,6 +35,8 @@
       <div class="row">
         <input type="file" id="file-table" accept=".tsv,.txt,.text,text/plain,text/tab-separated-values">
         <button type="button" id="btn-table-reset" class="ghost">既定に戻す</button>
+        <button type="button" id="btn-table-check" class="ghost"
+                title="かなが一通り打てるかを確かめます">かなの点検</button>
       </div>
       <p class="status" id="table-status"></p>
       <details>
@@ -53,9 +55,8 @@ kz	かん		sei,row.ka		ext.hatsu,dan.an
           <li><code>入力</code> が重複した場合は、後に定義した行で上書きされます。</li>
           <li><code>出力</code> と <code>次の入力</code> がどちらも空の行はコメントとして無視されます。
               コメント行にはタブを入れないでください。</li>
-          <li>4〜6 列目のタグは段階練習で使います。自由設定モードでは全タグ有効です。</li>
-          <li><code>@alwaysEnabled</code> の行で、段階に関係なく常時有効なタグを宣言します。</li>
-          <li>文字コードは UTF-8 / UTF-16 / Shift_JIS を自動判定します。</li>
+          <li>4〜6 列目のタグは省略できます。このページでは全タグが有効なので、タグ付きのテーブルもそのまま読めます。</li>
+                    <li>文字コードは UTF-8 / UTF-16 / Shift_JIS を自動判定します。</li>
         </ul>
       </details>
     </div>

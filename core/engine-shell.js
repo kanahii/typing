@@ -18,7 +18,8 @@ const $ = id => document.getElementById(id);
 
 const el = {
   settings: $('settings'), btnSettings: $('btn-settings'),
-  fileTable: $('file-table'), btnTableReset: $('btn-table-reset'), tableStatus: $('table-status'),
+  fileTable: $('file-table'), btnTableReset: $('btn-table-reset'),
+  btnTableCheck: $('btn-table-check'), tableStatus: $('table-status'),
   fileProblems: $('file-problems'), btnProblemsReset: $('btn-problems-reset'),
   problemsStatus: $('problems-status'),
   optLayout: $('opt-layout'), optKeyboard: $('opt-keyboard'), optLabels: $('opt-labels'),
@@ -36,9 +37,13 @@ const KEY_TABLE = 'engine.table';
 const KEY_PROBLEMS = 'engine.problems';
 const KEY_OPTIONS = 'engine.options';
 
+// 「かなの点検」で読み込む、かなを一通り並べたお題ファイル
+const CHECK_FILE = 'sample-problems/kana-check.tsv';
+
 let table = null;
 let pool = [];
 let session = null;
+let poolLabel = '';        // お題欄の通常表示。除外の知らせを出した後で戻すのに使う
 
 /* ---------- テーブル / お題 ---------- */
 
@@ -70,12 +75,23 @@ function applyProblems(list, name, text) {
     return false;
   }
   pool = list;
-  el.problemsStatus.textContent = name + ' — ' + list.length + ' 件';
+  poolLabel = name + ' — ' + list.length + ' 件';
+  el.problemsStatus.textContent = poolLabel;
   el.problemsStatus.className = 'status';
   if (text !== undefined && !Store.write(KEY_PROBLEMS, { name: name, text: text })) {
     el.problemsStatus.textContent += '（大きすぎるので記憶しません）';
   }
   return true;
+}
+
+/*
+ * 打てなかったものの並べ方。
+ * 1〜2 件しか出さないと何が足りないのか見当が付かないので 5 件まで出す。
+ */
+function listSkipped(names) {
+  const shown = names.slice(0, 5);
+  const rest = names.length - shown.length;
+  return shown.join(' / ') + (rest > 0 ? ' ほか ' + rest + ' 件' : '');
 }
 
 function readFile(file, onText) {
@@ -119,11 +135,15 @@ function buildItems() {
   const count = parseInt(el.optCount.value, 10) || 10;
   const r = Problems.selectItems(table, pool, count, el.optShuffle.checked,
                                  Layout.routeOpts(Layout.get(el.optLayout.value)));
+  // 除外の知らせは出し直すたびに更新する。テーブルを直して出なくなったのに
+  // 前の知らせが残っていると、直っていないように見える
   if (r.skipped.length) {
     el.problemsStatus.textContent = '現在のローマ字テーブルでは打てないお題 '
-      + r.skipped.length + ' 件を出題から外しました: ' + r.skipped.slice(0, 3).join(' / ')
-      + (r.skipped.length > 3 ? ' ほか' : '');
+      + r.skipped.length + ' 件を出題から外しました: ' + listSkipped(r.skipped);
     el.problemsStatus.className = 'status error';
+  } else {
+    el.problemsStatus.textContent = poolLabel;
+    el.problemsStatus.className = 'status';
   }
   return r.items;
 }
@@ -171,6 +191,35 @@ el.fileTable.addEventListener('change', () => {
   const f = el.fileTable.files[0];
   if (!f) return;
   readFile(f, text => { if (applyTable(text, f.name, true)) start(); });
+});
+
+/*
+ * いま読み込んでいるテーブルで、かなが一通り打てるかを確かめる。
+ * お題は入れ替えず、結果だけを出す。独自のテーブルを書いたときに
+ * 「どの行が抜けているか」を探すのが目的。
+ */
+el.btnTableCheck.addEventListener('click', () => {
+  el.tableStatus.textContent = '点検しています…';
+  el.tableStatus.className = 'status';
+  fetch(CHECK_FILE, { cache: 'no-cache' })
+    .then(res => (res.ok ? res.text() : Promise.reject(new Error(String(res.status)))))
+    .then(text => {
+      const list = Problems.parse(text);
+      const r = Problems.selectItems(table, list, list.length, false,
+                                     Layout.routeOpts(Layout.get(el.optLayout.value)));
+      if (!r.skipped.length) {
+        el.tableStatus.textContent = 'かなの点検: ' + list.length + ' 件すべて打てます';
+        el.tableStatus.className = 'status';
+      } else {
+        el.tableStatus.textContent = 'かなの点検: ' + list.length + ' 件中 '
+          + r.skipped.length + ' 件が打てません — ' + listSkipped(r.skipped);
+        el.tableStatus.className = 'status error';
+      }
+    })
+    .catch(() => {
+      el.tableStatus.textContent = '点検用のファイルを読めませんでした（' + CHECK_FILE + '）。';
+      el.tableStatus.className = 'status error';
+    });
 });
 
 el.btnTableReset.addEventListener('click', () => {
