@@ -11,7 +11,7 @@
 python -m http.server 8000
 ```
 
-その後 `http://localhost:8000/typing/` を開きます。
+その後 `http://localhost:8000/` を開きます。
 （`file://` は ES モジュールが CORS で読めないため使えません）
 
 ローマ字テーブルとお題は「設定」から差し替えられます。テーブルは Google
@@ -44,13 +44,11 @@ python -m http.server 8000
 | `core/keyboard-view.js` | キーボード描画、`getKeyRect`、`layout` イベント | layout |
 | `core/session.js` | エンジン本体 `createSession(container, config)` | 上記 |
 | `core/engine-shell.js` | 画面のシェル（設定 UI とファイル読み込み） | 上記 |
-| `engine.html` | 練習画面 | |
-| `index.html` | `engine.html` への転送 | |
+| `index.html` | 練習画面 | |
 | `data/romaji-default.js` | 既定のローマ字テーブル | |
 | `data/problems-default.js` | 既定のお題 200 問 | |
-| `sample-tables/kunrei.tsv` | 差し替え用サンプル（訓令式のみ） | |
-| `words/default.tsv` | お題ファイルのサンプル（既定の 200 問） | |
-| `../tools/keycheck.html` | `keydown` の `code` / `key` / `shift` 確認ページ | |
+| `sample-tables/kunrei.tsv` | 差し替え用テーブルのサンプル（訓令式のみ） | |
+| `keycheck.html` | `keydown` の `code` / `key` / `shift` 確認ページ | |
 
 エンジンの公開 API は実質これだけです。
 
@@ -81,7 +79,7 @@ session.on('finish', result => { /* 結果の解釈は呼び出し側 */ });
 判定はできません。
 
 変換表は `core/layout.js` の 1 箇所だけにあります。実機で `code` が想定と
-違っていたら、`tools/keycheck.html` で確認してここを直してください。
+違っていたら、`keycheck.html` で確認してここを直してください。
 
 ### 配列によって案内が変わる場合
 
@@ -495,4 +493,4 @@ IME はオフ（直接入力）にしてください。オンのまま打つと�
 
 ## ライセンス
 
-MIT License — [LICENSE](../LICENSE)
+MIT License — [LICENSE](LICENSE)
