@@ -9,6 +9,7 @@
 import * as Layout from './layout.js';
 import * as Table from './table.js';
 import * as Problems from './problems.js';
+import * as Store from './store.js';
 import { createSession } from './session.js';
 import { DEFAULT_ROMAJI_TSV, DEFAULT_ROMAJI_TABLE_NAME } from '../data/romaji-default.js';
 import { DEFAULT_PROBLEMS, DEFAULT_PROBLEMS_NAME } from '../data/problems-default.js';
@@ -25,7 +26,15 @@ const el = {
   btnApply: $('btn-apply'), imeWarning: $('ime-warning'), play: $('play')
 };
 
-const LAYOUT_KEY = 'typing.keyboardLayout';
+/*
+ * 覚えておくもの。ローマ字テーブルを差し替えて使う人は、開くたびに読み込み
+ * 直すのが手間なので、読み込んだテキストごと保存しておく。
+ * キーはすべて Store が "typing." の下に置く。
+ */
+const KEY_LAYOUT = 'keyboardLayout';    // 配列は段階練習モードとも共有する
+const KEY_TABLE = 'engine.table';
+const KEY_PROBLEMS = 'engine.problems';
+const KEY_OPTIONS = 'engine.options';
 
 let table = null;
 let pool = [];
@@ -33,7 +42,7 @@ let session = null;
 
 /* ---------- テーブル / お題 ---------- */
 
-function applyTable(text, name) {
+function applyTable(text, name, remember) {
   const t = Table.parse(text);
   if (t.size === 0) {
     el.tableStatus.textContent = '読み込めませんでした（有効な行が 0 件）。タブ区切りか確認してください。';
@@ -48,10 +57,13 @@ function applyTable(text, name) {
     + (s.overwritten ? ' / 上書き ' + s.overwritten + ' 件' : '') + '）'
     + (t.alwaysEnabled.length ? ' 常時有効タグ: ' + t.alwaysEnabled.join(', ') : '');
   el.tableStatus.className = 'status';
+  if (remember && !Store.write(KEY_TABLE, { name: name, text: text })) {
+    el.tableStatus.textContent += '（大きすぎるので記憶しません）';
+  }
   return true;
 }
 
-function applyProblems(list, name) {
+function applyProblems(list, name, text) {
   if (!list.length) {
     el.problemsStatus.textContent = 'お題が 0 件でした。';
     el.problemsStatus.className = 'status error';
@@ -60,6 +72,9 @@ function applyProblems(list, name) {
   pool = list;
   el.problemsStatus.textContent = name + ' — ' + list.length + ' 件';
   el.problemsStatus.className = 'status';
+  if (text !== undefined && !Store.write(KEY_PROBLEMS, { name: name, text: text })) {
+    el.problemsStatus.textContent += '（大きすぎるので記憶しません）';
+  }
   return true;
 }
 
@@ -70,6 +85,27 @@ function readFile(file, onText) {
 }
 
 /* ---------- セッション ---------- */
+
+function saveOptions() {
+  Store.write(KEY_OPTIONS, {
+    keyboard: el.optKeyboard.checked,
+    labels: el.optLabels.checked,
+    romaji: el.optRomaji.checked,
+    shuffle: el.optShuffle.checked,
+    count: parseInt(el.optCount.value, 10) || 10
+  });
+}
+
+function restoreOptions() {
+  const o = Store.read(KEY_OPTIONS);
+  if (!o) return;
+  if (typeof o.keyboard === 'boolean') el.optKeyboard.checked = o.keyboard;
+  if (typeof o.labels === 'boolean') el.optLabels.checked = o.labels;
+  if (typeof o.romaji === 'boolean') el.optRomaji.checked = o.romaji;
+  if (typeof o.shuffle === 'boolean') el.optShuffle.checked = o.shuffle;
+  const n = Number(o.count);
+  if (n >= 1 && n <= 500) el.optCount.value = n;
+}
 
 function currentOptions() {
   return {
@@ -115,28 +151,31 @@ el.btnSettings.addEventListener('click', () => {
 
 el.btnApply.addEventListener('click', () => {
   el.settings.hidden = true;
+  saveOptions();
   start();
 });
 
 for (const id of ['optKeyboard', 'optLabels', 'optRomaji']) {
   el[id].addEventListener('change', () => {
+    saveOptions();
     if (session) { session.setOptions(currentOptions()); session.focus(); }
   });
 }
 
 el.optLayout.addEventListener('change', () => {
-  try { localStorage.setItem(LAYOUT_KEY, el.optLayout.value); } catch (e) { /* 無視 */ }
+  Store.write(KEY_LAYOUT, el.optLayout.value);
   if (session) { session.setLayout(el.optLayout.value); session.focus(); }
 });
 
 el.fileTable.addEventListener('change', () => {
   const f = el.fileTable.files[0];
   if (!f) return;
-  readFile(f, text => { if (applyTable(text, f.name)) start(); });
+  readFile(f, text => { if (applyTable(text, f.name, true)) start(); });
 });
 
 el.btnTableReset.addEventListener('click', () => {
   el.fileTable.value = '';
+  Store.remove(KEY_TABLE);
   applyTable(DEFAULT_ROMAJI_TSV, DEFAULT_ROMAJI_TABLE_NAME);
   start();
 });
@@ -144,11 +183,12 @@ el.btnTableReset.addEventListener('click', () => {
 el.fileProblems.addEventListener('change', () => {
   const f = el.fileProblems.files[0];
   if (!f) return;
-  readFile(f, text => { if (applyProblems(Problems.parse(text), f.name)) start(); });
+  readFile(f, text => { if (applyProblems(Problems.parse(text), f.name, text)) start(); });
 });
 
 el.btnProblemsReset.addEventListener('click', () => {
   el.fileProblems.value = '';
+  Store.remove(KEY_PROBLEMS);
   applyProblems(Problems.fromPairs(DEFAULT_PROBLEMS), DEFAULT_PROBLEMS_NAME);
   start();
 });
@@ -168,13 +208,27 @@ for (const l of Layout.list()) {
   el.optLayout.appendChild(op);
 }
 // 配列の誤設定は「壊れている」と読まれるので、選んだものは覚えておく (§2)
-try {
-  const saved = localStorage.getItem(LAYOUT_KEY);
-  if (saved) el.optLayout.value = saved;
-} catch (e) { /* 無視 */ }
+const savedLayout = Store.read(KEY_LAYOUT);
+if (savedLayout) el.optLayout.value = savedLayout;
+restoreOptions();
 
-applyTable(DEFAULT_ROMAJI_TSV, DEFAULT_ROMAJI_TABLE_NAME);
-applyProblems(Problems.fromPairs(DEFAULT_PROBLEMS), DEFAULT_PROBLEMS_NAME);
+/*
+ * 前回のテーブル / お題を戻す。読めなければ保存を捨てて既定に落とす。
+ * (パーサを直した後で古い保存が残っていても、起動しなくならないように)
+ */
+function restore(key, apply, fallback) {
+  const saved = Store.read(key);
+  if (saved && typeof saved.text === 'string' && apply(saved.text, saved.name)) return;
+  if (saved) Store.remove(key);
+  fallback();
+}
+
+restore(KEY_TABLE,
+  (text, name) => applyTable(text, name || '記憶したテーブル'),
+  () => applyTable(DEFAULT_ROMAJI_TSV, DEFAULT_ROMAJI_TABLE_NAME));
+restore(KEY_PROBLEMS,
+  (text, name) => applyProblems(Problems.parse(text), name || '記憶したお題'),
+  () => applyProblems(Problems.fromPairs(DEFAULT_PROBLEMS), DEFAULT_PROBLEMS_NAME));
 start();
 
 // デバッグ・自動確認用
