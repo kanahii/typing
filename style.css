@@ -81,6 +81,11 @@ button.primary:hover { filter: brightness(1.1); }
 .status { font-size: 13px; color: var(--accent); margin: 8px 0 0; }
 .status.error { color: var(--miss); }
 .status.hint-note { color: var(--dim); }
+/* 設定の先頭に置く但し書き。読み込みをためらわせないための一言 */
+.settings .local-note {
+  margin: 0 0 20px; padding-bottom: 14px;
+  border-bottom: 1px solid var(--line);
+}
 details { margin-top: 10px; font-size: 13px; color: var(--dim); }
 details summary { cursor: pointer; }
 details p, details ul { margin: 8px 0; }
