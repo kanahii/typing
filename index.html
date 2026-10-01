@@ -71,13 +71,16 @@ kz	かん		sei,row.ka		ext.hatsu,dan.an
           <li><code>出力</code> と <code>次の入力</code> がどちらも空の行はコメントとして無視されます。
               コメント行にはタブを入れないでください。</li>
           <li>4〜6 列目のタグは省略できます。このページでは全タグが有効なので、タグ付きのテーブルもそのまま読めます。</li>
-                    <li>文字コードは UTF-8 / UTF-16 / Shift_JIS を自動判定します。</li>
+          <li>文字コードは UTF-8 / UTF-16 / Shift_JIS を自動判定します。</li>
         </ul>
       </details>
     </div>
 
     <div class="setting">
-      <label for="file-problems">お題ファイル (表示文 &lt;TAB&gt; よみ &lt;TAB&gt; 打鍵列)</label>
+      <div class="setting-head">
+        <label for="file-problems">お題ファイル (表示文 &lt;TAB&gt; よみ)</label>
+        ※ <code>#{</code> … <code>#}</code> で囲んだ数行は、ランダム出題中でも並び替えずに続けて出題されます。
+      </div>
       <div class="row">
         <input type="file" id="file-problems" accept=".tsv,.txt,.text,text/plain,text/tab-separated-values">
         <button type="button" id="btn-problems-reset" class="ghost">既定に戻す</button>

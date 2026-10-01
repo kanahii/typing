@@ -70,6 +70,10 @@ button.primary:hover { filter: brightness(1.1); }
 .settings .setting { margin-bottom: 20px; }
 .settings .setting:last-child { margin-bottom: 0; }
 .settings label { display: block; font-size: 13px; color: var(--dim); margin-bottom: 6px; }
+/* 見出しに注記を続ける行。label を for で結ぶ範囲は見出しだけに留める */
+.settings .setting-head { font-size: 13px; color: var(--dim); margin-bottom: 6px; }
+.settings .setting-head label { display: inline; margin: 0; }
+.settings .setting-head code { background: #10131a; padding: 1px 5px; border-radius: 4px; }
 .settings label.inline { display: inline-flex; align-items: center; gap: 6px; margin: 0; }
 .row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
 .settings input[type="file"] { font: inherit; font-size: 13px; color: var(--dim); max-width: 100%; }

@@ -44,6 +44,7 @@ let table = null;
 let pool = [];
 let session = null;
 let poolLabel = '';        // お題欄の通常表示。除外の知らせを出した後で戻すのに使う
+let poolWarning = '';      // 記法の警告。除外の知らせが出ても消さずに添える
 
 /* ---------- テーブル / お題 ---------- */
 
@@ -68,20 +69,54 @@ function applyTable(text, name, remember) {
   return true;
 }
 
-function applyProblems(list, name, text) {
-  if (!list.length) {
+/*
+ * 読み込んだお題を受け取る。parsed は Problems.parse / fromPairs の戻り値。
+ *
+ * 記法に誤りがあるファイルは読み込まない。一部だけ読むと、誤った範囲で
+ * グループが成立したりしなかったりしても気付けないため。断ったときは
+ * 前のお題がそのまま残る。
+ */
+function applyProblems(parsed, name, text) {
+  if (parsed.errors.length) {
+    const e = parsed.errors[0];
+    el.problemsStatus.textContent = name + ' の ' + e.line + ' 行目: ' + e.message
+      + (parsed.errors.length > 1 ? '（ほか ' + (parsed.errors.length - 1) + ' 件）' : '')
+      + ' — 読み込みませんでした。';
+    el.problemsStatus.className = 'status error';
+    return false;
+  }
+  const units = parsed.units;
+  const n = Problems.countItems(units);
+  if (!n) {
     el.problemsStatus.textContent = 'お題が 0 件でした。';
     el.problemsStatus.className = 'status error';
     return false;
   }
-  pool = list;
-  poolLabel = name + ' — ' + list.length + ' 件';
-  el.problemsStatus.textContent = poolLabel;
-  el.problemsStatus.className = 'status';
-  if (text !== undefined && !Store.write(KEY_PROBLEMS, { name: name, text: text })) {
-    el.problemsStatus.textContent += '（大きすぎるので記憶しません）';
+  pool = units;
+  const groups = units.filter(u => u.items.length > 1).length;
+  poolLabel = name + ' — ' + n + ' 件' + (groups ? '（うち連続グループ ' + groups + ' 組）' : '');
+  poolWarning = '';
+  if (parsed.warnings.length) {
+    const w = parsed.warnings[0];
+    poolWarning = '　※ ' + w.line + ' 行目: ' + w.message
+      + (parsed.warnings.length > 1 ? '（ほか ' + (parsed.warnings.length - 1) + ' 件）' : '');
   }
+  if (text !== undefined && !Store.write(KEY_PROBLEMS, { name: name, text: text })) {
+    poolLabel += '（大きすぎるので記憶しません）';
+  }
+  showPoolStatus(null);
   return true;
+}
+
+/*
+ * お題欄の表示。知らせがあればそれを、無ければ通常表示を出す。
+ * 記法の警告は、どちらの場合も末尾に添える。出したきり上書きされると、
+ * 「書き間違いがある」ことに気付けないため。
+ */
+function showPoolStatus(notes) {
+  const body = notes && notes.length ? notes.join('　/　') : poolLabel;
+  el.problemsStatus.textContent = body + poolWarning;
+  el.problemsStatus.className = (notes && notes.length) ? 'status error' : 'status';
 }
 
 /*
@@ -137,14 +172,19 @@ function buildItems() {
                                  Layout.routeOpts(Layout.get(el.optLayout.value)));
   // 除外の知らせは出し直すたびに更新する。テーブルを直して出なくなったのに
   // 前の知らせが残っていると、直っていないように見える
+  const notes = [];
   if (r.skipped.length) {
-    el.problemsStatus.textContent = '現在のローマ字テーブルでは打てないお題 '
-      + r.skipped.length + ' 件を出題から外しました: ' + listSkipped(r.skipped);
-    el.problemsStatus.className = 'status error';
-  } else {
-    el.problemsStatus.textContent = poolLabel;
-    el.problemsStatus.className = 'status';
+    notes.push('現在のローマ字テーブルでは打てないお題 ' + r.skipped.length
+      + ' 件を出題から外しました: ' + listSkipped(r.skipped));
   }
+  if (r.tooLong.length) {
+    // 行数だけで決まる静的な条件なので、同じ設定なら毎回同じものが挙がる
+    const min = Math.min(...r.tooLong.map(x => x.length));
+    notes.push('出題数より長い連続グループ ' + r.tooLong.length + ' 組を外しました: '
+      + listSkipped(r.tooLong.map(x => x.name + '（' + x.length + ' 行）'))
+      + ' — 出題数を ' + min + ' 以上にすると出ます');
+  }
+  showPoolStatus(notes);
   return r.items;
 }
 
@@ -204,14 +244,15 @@ el.btnTableCheck.addEventListener('click', () => {
   fetch(CHECK_FILE, { cache: 'no-cache' })
     .then(res => (res.ok ? res.text() : Promise.reject(new Error(String(res.status)))))
     .then(text => {
-      const list = Problems.parse(text);
-      const r = Problems.selectItems(table, list, list.length, false,
+      const units = Problems.parse(text).units;
+      const n = Problems.countItems(units);
+      const r = Problems.selectItems(table, units, n, false,
                                      Layout.routeOpts(Layout.get(el.optLayout.value)));
       if (!r.skipped.length) {
-        el.tableStatus.textContent = 'かなの点検: ' + list.length + ' 件すべて打てます';
+        el.tableStatus.textContent = 'かなの点検: ' + n + ' 件すべて打てます';
         el.tableStatus.className = 'status';
       } else {
-        el.tableStatus.textContent = 'かなの点検: ' + list.length + ' 件中 '
+        el.tableStatus.textContent = 'かなの点検: ' + n + ' 件中 '
           + r.skipped.length + ' 件が打てません — ' + listSkipped(r.skipped);
         el.tableStatus.className = 'status error';
       }
